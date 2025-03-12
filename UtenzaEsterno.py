@@ -1,6 +1,7 @@
 import streamlit as st
 import csv
 from datetime import datetime, timedelta
+import io
 
 # Funzione per formattare la data (da gg-mm-aaaa a "mm/dd/aaaa 00:00") con gestione del cambio mese/anno
 def formatta_data(data):
@@ -52,16 +53,32 @@ if st.button("Genera CSV"):
         userprincipalname, userprincipalname, mobile, "", inserimento_gruppo, "", "", telephone_number, company
     ]
 
-    # Creazione file CSV
-    nome_file = f"{cognome}_{nome[0]}.csv"
-    with open(nome_file, "w", newline="") as file:
-        writer = csv.writer(file, quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([
-            "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
-            "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
-            "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
-            "disable", "moveToOU", "telephoneNumber", "company"
-        ])
-        writer.writerow(row)
+    # Creazione del file CSV in memoria (senza salvarlo subito su disco)
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+    writer.writerow([
+        "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
+        "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
+        "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
+        "disable", "moveToOU", "telephoneNumber", "company"
+    ])
+    writer.writerow(row)
+    output.seek(0)  # Resetta il puntatore per leggere il contenuto
 
-    st.success(f"File CSV generato correttamente come '{nome_file}' con data di scadenza '{expire_date_formatted}'")
+    # Mostra i risultati in un dataframe
+    st.dataframe([row], columns=[
+        "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
+        "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
+        "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
+        "disable", "moveToOU", "telephoneNumber", "company"
+    ])
+
+    # Aggiungi un pulsante per scaricare il file CSV generato
+    st.download_button(
+        label="Scarica il CSV",
+        data=output.getvalue(),
+        file_name=f"{cognome}_{nome[0]}.csv",
+        mime="text/csv"
+    )
+
+    st.success(f"File CSV generato correttamente con data di scadenza '{expire_date_formatted}'")
