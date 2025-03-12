@@ -23,12 +23,11 @@ expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025")
 # Variabile di input per Description con valore di default <PC>
 description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>").strip()
 
-# Variabile per il codice fiscale per gli esterni
+# Variabile per il codice fiscale per tutti gli utenti
 codice_fiscale = st.text_input("Codice Fiscale", "").strip()
 
 if tipo_utente == "Dipendente Consip":
     ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
-    employee_number = st.text_input("Codice Fiscale (Employee Number)", "").strip()
     employee_id = st.text_input("Employee ID", "").strip()
     department = st.text_input("Dipartimento", "").strip()
     inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GEDOGA-P-DOCGAR;GRPFreeDeskUser"
@@ -37,12 +36,14 @@ if tipo_utente == "Dipendente Consip":
 else:
     dipendente = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"])
     ou = "Utenti esterni - Consulenti" if dipendente == "Consulente" else "Utenti esterni - Somministrati e Stage"
-    employee_number = codice_fiscale  # Per gli esterni, il codice fiscale è usato come employee number
     employee_id = ""
     department = "Utente esterno"
     inserimento_gruppo = "consip_vpn"
     telephone_number = ""
     company = ""
+
+# Utilizza il codice fiscale come employeeNumber
+employee_number = codice_fiscale
 
 if st.button("Genera CSV"):
     # Creazione valori comuni
