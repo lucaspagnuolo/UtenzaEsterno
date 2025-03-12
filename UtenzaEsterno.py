@@ -23,6 +23,9 @@ expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025")
 # Variabile di input per Description con valore di default <PC>
 description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>").strip()
 
+# Variabile per il codice fiscale per gli esterni
+codice_fiscale = st.text_input("Codice Fiscale (per Esterni)", "").strip()
+
 if tipo_utente == "Dipendente Consip":
     ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
     employee_number = st.text_input("Codice Fiscale (Employee Number)", "").strip()
@@ -34,7 +37,7 @@ if tipo_utente == "Dipendente Consip":
 else:
     dipendente = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"])
     ou = "Utenti esterni - Consulenti" if dipendente == "Consulente" else "Utenti esterni - Somministrati e Stage"
-    employee_number = ""
+    employee_number = codice_fiscale  # Per gli esterni, il codice fiscale è usato come employee number
     employee_id = ""
     department = "Utente esterno"
     inserimento_gruppo = "consip_vpn"
@@ -81,12 +84,4 @@ if st.button("Genera CSV"):
     ])
     st.dataframe(df)
 
-    # Aggiungi un pulsante per scaricare il file CSV generato
-    st.download_button(
-        label="Scarica il CSV",
-        data=output.getvalue(),
-        file_name=f"{cognome}_{nome[0]}.csv",
-        mime="text/csv"
-    )
-
-    st.success(f"File CSV generato correttamente con data di scadenza '{expire_date_formatted}'")
+ 
