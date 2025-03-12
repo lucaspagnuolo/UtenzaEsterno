@@ -20,6 +20,9 @@ cognome = st.text_input("Cognome").strip().capitalize()
 numero_telefono = st.text_input("Numero di Telefono", "").replace(" ", "")
 expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025")
 
+# Variabile di input per Description con valore di default <PC>
+description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>").strip()
+
 if tipo_utente == "Dipendente Consip":
     ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
     employee_number = st.text_input("Codice Fiscale (Employee Number)", "").strip()
@@ -47,17 +50,20 @@ if st.button("Genera CSV"):
     userprincipalname = f"{sAMAccountName}@consip.it"
     mobile = f"+39 {numero_telefono}" if numero_telefono else ""
 
+    # Se la variabile Description è vuota, imposta il valore di default a <PC>
+    description = description_input if description_input else "<PC>"
+
     # Riga CSV
     row = [
         sAMAccountName, "SI", ou, sAMAccountName, display_name, cn, nome, cognome,
-        employee_number, employee_id, department, "<PC>", "No", expire_date_formatted,
+        employee_number, employee_id, department, description, "No", expire_date_formatted,
         userprincipalname, userprincipalname, mobile, "", inserimento_gruppo, "", "", telephone_number, company
     ]
 
     # Creazione del file CSV in memoria (senza salvarlo subito su disco)
     output = io.StringIO()
     writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
-    writer.writerow([
+    writer.writerow([ 
         "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
         "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
         "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
