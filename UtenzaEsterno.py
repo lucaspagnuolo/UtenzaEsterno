@@ -1,5 +1,6 @@
 import streamlit as st
 import csv
+import pandas as pd
 from datetime import datetime, timedelta
 import io
 
@@ -66,12 +67,13 @@ if st.button("Genera CSV"):
     output.seek(0)  # Resetta il puntatore per leggere il contenuto
 
     # Mostra i risultati in un dataframe
-    st.dataframe([row], columns=[
+    df = pd.DataFrame([row], columns=[
         "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
         "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
         "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
         "disable", "moveToOU", "telephoneNumber", "company"
     ])
+    st.dataframe(df)
 
     # Aggiungi un pulsante per scaricare il file CSV generato
     st.download_button(
