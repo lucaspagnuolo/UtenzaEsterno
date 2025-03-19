@@ -36,7 +36,7 @@ else:
     employee_id = ""
     department = "Utente esterno"
     if dipendente == "Somministrato/Stage":
-        inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GEDOGA-P-DOCGAR;GRPFreeDeskUser"
+        inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
     else:
         inserimento_gruppo = "consip_vpn"
     telephone_number = ""
