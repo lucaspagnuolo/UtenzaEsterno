@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import io
 
-# Funzione per formattare la data (da gg-mm-aaaa a "mm/dd/aaaa 00:00") con gestione del cambio mese/anno
+# Funzione per formattare la data
 def formatta_data(data):
     giorno, mese, anno = map(int, data.split("-"))
     data_fine = datetime(anno, mese, giorno) + timedelta(days=1)
@@ -47,7 +47,6 @@ employee_number = codice_fiscale
 if st.button("Genera CSV"):
     sAMAccountName = f"{nome.lower()}.{cognome.lower()}" if tipo_utente == "Dipendente Consip" else f"{nome.lower()}.{cognome.lower()}.ext"
     display_name = f"{cognome} {nome} (esterno)" if tipo_utente == "Esterno" else f"{cognome} {nome}"
-    cn = display_name
     expire_date_formatted = formatta_data(expire_date)
     userprincipalname = f"{sAMAccountName}@consip.it"
     mobile = f"+39 {numero_telefono}" if numero_telefono else ""
