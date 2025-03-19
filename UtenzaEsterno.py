@@ -54,7 +54,7 @@ if st.button("Genera CSV"):
     description = description_input if description_input else "<PC>"
 
     row = [
-        sAMAccountName, "SI", ou, sAMAccountName, display_name, cn, nome, cognome,
+        sAMAccountName, "SI", ou, display_name, display_name, display_name, nome, cognome,
         employee_number, employee_id, department, description, "No", expire_date_formatted,
         userprincipalname, userprincipalname, mobile, "", inserimento_gruppo, "", "", telephone_number, company
     ]
