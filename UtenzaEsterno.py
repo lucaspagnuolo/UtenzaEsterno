@@ -10,6 +10,22 @@ def formatta_data(data):
     data_fine = datetime(anno, mese, giorno) + timedelta(days=1)
     return data_fine.strftime("%m/%d/%Y 00:00")
 
+# Funzione per generare sAMAccountName
+def genera_samaccountname(nome, cognome, esterno):
+    nome = nome.split()[0]  # Prendi solo il primo nome
+    cognome = cognome.split()[0]  # Prendi solo il primo cognome
+    base = f"{nome.lower()}.{cognome.lower()}"
+    if esterno:
+        base += ".ext"
+
+    # Se supera i 20 caratteri, applica le regole
+    if len(base) > 20:
+        base = f"{nome[0].lower()}.{cognome.lower()}"
+        if esterno:
+            base += ".ext"
+
+    return base[:20]  # Troncamento per sicurezza
+
 # Interfaccia Streamlit
 st.title("Gestione Utenti Consip")
 
@@ -45,8 +61,9 @@ else:
 employee_number = codice_fiscale
 
 if st.button("Genera CSV"):
-    sAMAccountName = f"{nome.lower()}.{cognome.lower()}" if tipo_utente == "Dipendente Consip" else f"{nome.lower()}.{cognome.lower()}.ext"
-    display_name = f"{cognome} {nome} (esterno)" if tipo_utente == "Esterno" else f"{cognome} {nome}"
+    esterno = tipo_utente == "Esterno"
+    sAMAccountName = genera_samaccountname(nome, cognome, esterno)
+    display_name = f"{cognome} {nome} (esterno)" if esterno else f"{cognome} {nome}"
     expire_date_formatted = formatta_data(expire_date)
     userprincipalname = f"{sAMAccountName}@consip.it"
     mobile = f"+39 {numero_telefono}" if numero_telefono else ""
@@ -84,4 +101,4 @@ if st.button("Genera CSV"):
         mime="text/csv"
     )
 
-    st.success(f"File CSV generato correttamente con data di scadenza '{expire_date_formatted}'")
+    st.success(f"File CSV generato correttamente con sAMAccountName '{sAMAccountName}' e data di scadenza '{expire_date_formatted}'")
