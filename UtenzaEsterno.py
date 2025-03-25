@@ -39,6 +39,7 @@ expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025")
 description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>").strip()
 codice_fiscale = st.text_input("Codice Fiscale", "").strip()
 
+department = ""
 if tipo_utente == "Dipendente Consip":
     ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
     employee_id = st.text_input("Employee ID", "").strip()
@@ -50,12 +51,12 @@ else:
     dipendente = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"])
     ou = "Utenti esterni - Consulenti" if dipendente == "Consulente" else "Utenti esterni - Somministrati e Stage"
     employee_id = ""
+    department = "Utente esterno"
     if dipendente == "Somministrato/Stage":
         inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
         department = st.text_input("Dipartimento", "").strip()
     else:
         inserimento_gruppo = "consip_vpn"
-        department = "Utente esterno"
     telephone_number = ""
     company = ""
 
@@ -88,4 +89,18 @@ if st.button("Genera CSV"):
     output.seek(0)
 
     df = pd.DataFrame([row], columns=[
-        "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn"
+        "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
+        "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
+        "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
+        "disable", "moveToOU", "telephoneNumber", "company"
+    ])
+    st.dataframe(df)
+
+    st.download_button(
+        label="Scarica il CSV",
+        data=output.getvalue(),
+        file_name=f"{cognome}_{nome[0]}.csv",
+        mime="text/csv"
+    )
+
+    st.success(f"File CSV generato correttamente con sAMAccountName '{sAMAccountName}' e data di scadenza '{expire_date_formatted}'")
