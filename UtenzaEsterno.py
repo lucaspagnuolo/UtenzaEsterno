@@ -50,11 +50,12 @@ else:
     dipendente = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"])
     ou = "Utenti esterni - Consulenti" if dipendente == "Consulente" else "Utenti esterni - Somministrati e Stage"
     employee_id = ""
-    department = "Utente esterno"
     if dipendente == "Somministrato/Stage":
         inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
+        department = st.text_input("Dipartimento", "").strip()
     else:
         inserimento_gruppo = "consip_vpn"
+        department = "Utente esterno"
     telephone_number = ""
     company = ""
 
@@ -87,18 +88,4 @@ if st.button("Genera CSV"):
     output.seek(0)
 
     df = pd.DataFrame([row], columns=[
-        "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
-        "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
-        "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
-        "disable", "moveToOU", "telephoneNumber", "company"
-    ])
-    st.dataframe(df)
-
-    st.download_button(
-        label="Scarica il CSV",
-        data=output.getvalue(),
-        file_name=f"{cognome}_{nome[0]}.csv",
-        mime="text/csv"
-    )
-
-    st.success(f"File CSV generato correttamente con sAMAccountName '{sAMAccountName}' e data di scadenza '{expire_date_formatted}'")
+        "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn"
