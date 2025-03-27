@@ -34,10 +34,13 @@ tipo_utente = st.selectbox("Seleziona il tipo di utente:", ["Dipendente Consip",
 nome = st.text_input("Nome").strip().capitalize()
 cognome = st.text_input("Cognome").strip().capitalize()
 numero_telefono = st.text_input("Numero di Telefono", "").replace(" ", "")
-expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025")
-
 description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>").strip()
 codice_fiscale = st.text_input("Codice Fiscale", "").strip()
+
+# Mostra il campo data solo per utenti esterni
+expire_date = ""
+if tipo_utente == "Esterno":
+    expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025")
 
 department = ""
 if tipo_utente == "Dipendente Consip":
@@ -66,7 +69,7 @@ if st.button("Genera CSV"):
     esterno = tipo_utente == "Esterno"
     sAMAccountName = genera_samaccountname(nome, cognome, esterno)
     display_name = f"{cognome} {nome} (esterno)" if esterno else f"{cognome} {nome}"
-    expire_date_formatted = formatta_data(expire_date)
+    expire_date_formatted = formatta_data(expire_date) if esterno else ""  # Se dipendente, lascia vuoto
     userprincipalname = f"{sAMAccountName}@consip.it"
     mobile = f"+39 {numero_telefono}" if numero_telefono else ""
     description = description_input if description_input else "<PC>"
@@ -103,4 +106,4 @@ if st.button("Genera CSV"):
         mime="text/csv"
     )
 
-    st.success(f"File CSV generato correttamente con sAMAccountName '{sAMAccountName}' e data di scadenza '{expire_date_formatted}'")
+    st.success(f"File CSV generato correttamente con sAMAccountName '{sAMAccountName}' e data di scadenza '{expire_date_formatted or 'Non Applicabile'}'")
