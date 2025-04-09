@@ -5,19 +5,17 @@ from datetime import datetime, timedelta
 import io
 
 # Inizializza lo stato della sessione
-if 'reset' not in st.session_state:
-    st.session_state.reset = False
+reset_keys = [
+    "Nome", "Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
+    "Data di Fine", "Employee ID", "Dipartimento"
+]
+
+if "reset_fields" not in st.session_state:
+    st.session_state.reset_fields = False
 
 # Pulsante per pulire i campi
 if st.button("🔄 Pulisci Campi"):
-    for key in [
-        "Nome", "Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
-        "Data di Fine", "Employee ID", "Dipartimento"
-    ]:
-        if key in st.session_state:
-            del st.session_state[key]
-    st.session_state.reset = True
-    st.experimental_rerun()
+    st.session_state.reset_fields = True
 
 # Funzione per formattare la data
 def formatta_data(data):
@@ -27,21 +25,24 @@ def formatta_data(data):
 
 # Funzione per generare sAMAccountName
 def genera_samaccountname(nome, cognome, esterno):
-    nome = nome.split()[0]  # Prendi solo il primo nome
-    cognome = cognome.split()[0]  # Prendi solo il primo cognome
+    nome = nome.split()[0]
+    cognome = cognome.split()[0]
     base = f"{nome.lower()}.{cognome.lower()}"
     if esterno:
         base += ".ext"
-
-    # Se supera i 20 caratteri, applica le regole
     if len(base) > 20:
         base = f"{nome[0].lower()}.{cognome.lower()}"
         if esterno:
             base += ".ext"
+    return base[:20]
 
-    return base[:20]  # Troncamento per sicurezza
+# Se reset_fields è attivo, azzera i campi
+if st.session_state.reset_fields:
+    for key in reset_keys:
+        st.session_state[key] = ""
+    st.session_state.reset_fields = False
 
-# Interfaccia Streamlit
+# Interfaccia
 st.title("Gestione Utenti Consip")
 
 tipo_utente = st.selectbox("Seleziona il tipo di utente:", ["Dipendente Consip", "Esterno"])
@@ -52,7 +53,6 @@ numero_telefono = st.text_input("Numero di Telefono", "", key="Numero di Telefon
 description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>", key="Description").strip()
 codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
 
-# Mostra il campo data solo per utenti esterni
 expire_date = ""
 if tipo_utente == "Esterno":
     expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine")
@@ -84,7 +84,7 @@ if st.button("Genera CSV"):
     esterno = tipo_utente == "Esterno"
     sAMAccountName = genera_samaccountname(nome, cognome, esterno)
     display_name = f"{cognome} {nome} (esterno)" if esterno else f"{cognome} {nome}"
-    expire_date_formatted = formatta_data(expire_date) if esterno else ""  # Se dipendente, lascia vuoto
+    expire_date_formatted = formatta_data(expire_date) if esterno else ""
     userprincipalname = f"{sAMAccountName}@consip.it"
     mobile = f"+39 {numero_telefono}" if numero_telefono else ""
     description = description_input if description_input else "<PC>"
