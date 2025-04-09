@@ -4,6 +4,21 @@ import pandas as pd
 from datetime import datetime, timedelta
 import io
 
+# Inizializza lo stato della sessione
+if 'reset' not in st.session_state:
+    st.session_state.reset = False
+
+# Pulsante per pulire i campi
+if st.button("🔄 Pulisci Campi"):
+    for key in [
+        "Nome", "Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
+        "Data di Fine", "Employee ID", "Dipartimento"
+    ]:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.session_state.reset = True
+    st.experimental_rerun()
+
 # Funzione per formattare la data
 def formatta_data(data):
     giorno, mese, anno = map(int, data.split("-"))
@@ -31,22 +46,22 @@ st.title("Gestione Utenti Consip")
 
 tipo_utente = st.selectbox("Seleziona il tipo di utente:", ["Dipendente Consip", "Esterno"])
 
-nome = st.text_input("Nome").strip().capitalize()
-cognome = st.text_input("Cognome").strip().capitalize()
-numero_telefono = st.text_input("Numero di Telefono", "").replace(" ", "")
-description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>").strip()
-codice_fiscale = st.text_input("Codice Fiscale", "").strip()
+nome = st.text_input("Nome", key="Nome").strip().capitalize()
+cognome = st.text_input("Cognome", key="Cognome").strip().capitalize()
+numero_telefono = st.text_input("Numero di Telefono", "", key="Numero di Telefono").replace(" ", "")
+description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>", key="Description").strip()
+codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
 
 # Mostra il campo data solo per utenti esterni
 expire_date = ""
 if tipo_utente == "Esterno":
-    expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025")
+    expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine")
 
 department = ""
 if tipo_utente == "Dipendente Consip":
     ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
-    employee_id = st.text_input("Employee ID", "").strip()
-    department = st.text_input("Dipartimento", "").strip()
+    employee_id = st.text_input("Employee ID", "", key="Employee ID").strip()
+    department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
     inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GEDOGA-P-DOCGAR;GRPFreeDeskUser"
     telephone_number = "+39 06 854491"
     company = "Consip"
@@ -57,7 +72,7 @@ else:
     department = "Utente esterno"
     if dipendente == "Somministrato/Stage":
         inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
-        department = st.text_input("Dipartimento", "").strip()
+        department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
     else:
         inserimento_gruppo = "consip_vpn"
     telephone_number = ""
