@@ -89,36 +89,69 @@ if st.button("Genera CSV"):
     mobile = f"+39 {numero_telefono}" if numero_telefono else ""
     description = description_input if description_input else "<PC>"
 
+    # === CSV Principale ===
     row = [
         sAMAccountName, "SI", ou, display_name, display_name, display_name, nome, cognome,
         employee_number, employee_id, department, description, "No", expire_date_formatted,
         userprincipalname, userprincipalname, mobile, "", inserimento_gruppo, "", "", telephone_number, company
     ]
 
-    output = io.StringIO()
-    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
-    writer.writerow([
+    header_main = [
         "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
         "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
         "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
         "disable", "moveToOU", "telephoneNumber", "company"
-    ])
-    writer.writerow(row)
-    output.seek(0)
+    ]
 
-    df = pd.DataFrame([row], columns=[
-        "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
-        "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
-        "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
-        "disable", "moveToOU", "telephoneNumber", "company"
-    ])
-    st.dataframe(df)
+    output_main = io.StringIO()
+    writer_main = csv.writer(output_main, quoting=csv.QUOTE_MINIMAL)
+    writer_main.writerow(header_main)
+    writer_main.writerow(row)
+    output_main.seek(0)
+
+    df_main = pd.DataFrame([row], columns=header_main)
+    st.dataframe(df_main)
 
     st.download_button(
-        label="Scarica il CSV",
-        data=output.getvalue(),
-        file_name=f"{cognome}_{nome[0]}.csv",
+        label="📥 Scarica CSV Utente",
+        data=output_main.getvalue(),
+        file_name=f"{cognome}_{nome[0]}_utente.csv",
         mime="text/csv"
     )
 
-    st.success(f"File CSV generato correttamente con sAMAccountName '{sAMAccountName}' e data di scadenza '{expire_date_formatted or 'Non Applicabile'}'")
+    # === CSV Aggiuntivo ===
+    row_extra = [
+        description,  # Computer
+        ou,           # OU
+        userprincipalname,  # add_mail
+        "",           # remove_mail
+        mobile,       # add_mobile
+        "",           # remove_mobile
+        sAMAccountName,  # add_userprincipalname
+        "",           # remove_userprincipalname
+        "",           # disable
+        ""            # moveToOU
+    ]
+
+    header_extra = [
+        "Computer", "OU", "add_mail", "remove_mail", "add_mobile", "remove_mobile",
+        "add_userprincipalname", "remove_userprincipalname", "disable", "moveToOU"
+    ]
+
+    output_extra = io.StringIO()
+    writer_extra = csv.writer(output_extra, quoting=csv.QUOTE_MINIMAL)
+    writer_extra.writerow(header_extra)
+    writer_extra.writerow(row_extra)
+    output_extra.seek(0)
+
+    df_extra = pd.DataFrame([row_extra], columns=header_extra)
+    st.dataframe(df_extra)
+
+    st.download_button(
+        label="📥 Scarica CSV Extra",
+        data=output_extra.getvalue(),
+        file_name=f"{cognome}_{nome[0]}_extra.csv",
+        mime="text/csv"
+    )
+
+    st.success(f"✅ File CSV generati con successo per '{sAMAccountName}'")
