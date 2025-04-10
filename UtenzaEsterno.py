@@ -4,23 +4,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 import io
 
-# 🔐 Autenticazione semplice
-PASSWORD_CORRETTA = "Spagnuolo"
-
-if "autenticato" not in st.session_state:
-    st.session_state.autenticato = False
-
-if not st.session_state.autenticato:
-    st.title("🔐 Accesso richiesto")
-    password = st.text_input("Inserisci la password per accedere:", type="password")
-    if st.button("Accedi"):
-        if password == PASSWORD_CORRETTA:
-            st.session_state.autenticato = True
-            st.experimental_rerun()
-        else:
-            st.error("❌ Password errata.")
-    st.stop()
-
 # Inizializza lo stato della sessione
 reset_keys = [
     "Nome", "Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
