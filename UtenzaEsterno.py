@@ -19,9 +19,14 @@ if st.button("🔄 Pulisci Campi"):
 
 # Funzione per formattare la data
 def formatta_data(data):
-    giorno, mese, anno = map(int, data.split("-"))
-    data_fine = datetime(anno, mese, giorno) + timedelta(days=1)
-    return data_fine.strftime("%m/%d/%Y 00:00")
+    for separatore in ["-", "/"]:
+        try:
+            giorno, mese, anno = map(int, data.split(separatore))
+            data_fine = datetime(anno, mese, giorno) + timedelta(days=1)
+            return data_fine.strftime("%m/%d/%Y 00:00")
+        except:
+            continue
+    return data  # Se non riesce a fare il parsing, restituisce la stringa originale
 
 # Funzione per generare sAMAccountName
 def genera_samaccountname(nome, cognome, esterno):
@@ -141,7 +146,10 @@ else:  # Gestione Modifiche AD
             )
 
             for campo in campi_selezionati:
-                modifica[campo] = st.text_input(f"[{i+1}] {campo}", key=f"{campo}_{i}")
+                valore = st.text_input(f"[{i+1}] {campo}", key=f"{campo}_{i}")
+                if campo == "ExpireDate":
+                    valore = formatta_data(valore)
+                modifica[campo] = valore
 
             modifiche.append(modifica)
 
@@ -152,7 +160,7 @@ else:  # Gestione Modifiche AD
         writer.writerows(modifiche)
         output_modifiche.seek(0)
 
-        df_modifiche = pd.DataFrame(modifiche, columns=header_modifica)  # Assicura che tutte le colonne siano presenti
+        df_modifiche = pd.DataFrame(modifiche, columns=header_modifica)
         st.dataframe(df_modifiche)
 
         st.download_button(
