@@ -147,12 +147,12 @@ else:  # Gestione Modifiche AD
 
     if st.button("Genera CSV Modifiche"):
         output_modifiche = io.StringIO()
-        writer = csv.DictWriter(output_modifiche, fieldnames=header_modifica)
+        writer = csv.DictWriter(output_modifiche, fieldnames=header_modifica, extrasaction='ignore')
         writer.writeheader()
         writer.writerows(modifiche)
         output_modifiche.seek(0)
 
-        df_modifiche = pd.DataFrame(modifiche)
+        df_modifiche = pd.DataFrame(modifiche, columns=header_modifica)  # Assicura che tutte le colonne siano presenti
         st.dataframe(df_modifiche)
 
         st.download_button(
