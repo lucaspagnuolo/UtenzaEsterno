@@ -26,7 +26,7 @@ def formatta_data(data):
             return data_fine.strftime("%m/%d/%Y 00:00")
         except:
             continue
-    return data  # Se non riesce a fare il parsing, restituisce la stringa originale
+    return data
 
 # Funzione per generare sAMAccountName
 def genera_samaccountname(nome, cognome, esterno):
@@ -149,6 +149,10 @@ else:  # Gestione Modifiche AD
                 valore = st.text_input(f"[{i+1}] {campo}", key=f"{campo}_{i}")
                 if campo == "ExpireDate":
                     valore = formatta_data(valore)
+                elif campo == "mobile":
+                    valore = valore.strip()
+                    if valore and not valore.startswith("+"):
+                        valore = f"+39 {valore}"
                 modifica[campo] = valore
 
             modifiche.append(modifica)
