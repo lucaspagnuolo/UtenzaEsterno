@@ -13,14 +13,17 @@ reset_keys = [
 if "reset_fields" not in st.session_state:
     st.session_state.reset_fields = False
 
+# Pulsante per pulire i campi
 if st.button("🔄 Pulisci Campi"):
     st.session_state.reset_fields = True
 
+# Funzione per formattare la data
 def formatta_data(data):
     giorno, mese, anno = map(int, data.split("-"))
     data_fine = datetime(anno, mese, giorno) + timedelta(days=1)
     return data_fine.strftime("%m/%d/%Y 00:00")
 
+# Funzione per generare sAMAccountName
 def genera_samaccountname(nome, cognome, esterno):
     nome = nome.split()[0]
     cognome = cognome.split()[0]
@@ -33,12 +36,25 @@ def genera_samaccountname(nome, cognome, esterno):
             base += ".ext"
     return base[:20]
 
-# Switch tra le funzionalità
-funzione = st.radio("Seleziona Funzionalità:", ["Gestione Creazione utenze", "Gestione Modifiche AD"])
+# Se reset_fields è attivo, azzera i campi
+if st.session_state.reset_fields:
+    for key in reset_keys:
+        st.session_state[key] = ""
+    st.session_state.reset_fields = False
 
-if funzione == "Gestione Creazione utenze":
-    st.title("Creazioni Utenze Consip")
+# Interfaccia
+st.title("Gestione Utenze Consip")
 
+funzionalita = st.radio("Scegli funzionalità:", ["Gestione Creazione Utenze", "Gestione Modifiche AD"])
+
+header_modifica = [
+    "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
+    "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
+    "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
+    "disable", "moveToOU", "telephoneNumber", "company"
+]
+
+if funzionalita == "Gestione Creazione Utenze":
     tipo_utente = st.selectbox("Seleziona il tipo di utente:", ["Dipendente Consip", "Esterno"])
 
     nome = st.text_input("Nome", key="Nome").strip().capitalize()
@@ -89,87 +105,61 @@ if funzione == "Gestione Creazione utenze":
             userprincipalname, userprincipalname, mobile, "", inserimento_gruppo, "", "", telephone_number, company
         ]
 
-        header_main = [
-            "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
-            "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
-            "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
-            "disable", "moveToOU", "telephoneNumber", "company"
-        ]
-
         output_main = io.StringIO()
         writer_main = csv.writer(output_main, quoting=csv.QUOTE_MINIMAL)
-        writer_main.writerow(header_main)
+        writer_main.writerow(header_modifica)
         writer_main.writerow(row)
         output_main.seek(0)
 
-        df_main = pd.DataFrame([row], columns=header_main)
+        df_main = pd.DataFrame([row], columns=header_modifica)
         st.dataframe(df_main)
 
-        st.download_button("📥 Scarica CSV Utente", output_main.getvalue(), f"{cognome}_{nome[0]}_utente.csv", "text/csv")
+        st.download_button(
+            label="📥 Scarica CSV Utente",
+            data=output_main.getvalue(),
+            file_name=f"{cognome}_{nome[0]}_utente.csv",
+            mime="text/csv"
+        )
 
-        # CSV Extra
-        row_extra = [
-            description, ou, userprincipalname, "", mobile, "", sAMAccountName, "", "", ""
-        ]
-        header_extra = [
-            "Computer", "OU", "add_mail", "remove_mail", "add_mobile", "remove_mobile",
-            "add_userprincipalname", "remove_userprincipalname", "disable", "moveToOU"
-        ]
-        output_extra = io.StringIO()
-        writer_extra = csv.writer(output_extra, quoting=csv.QUOTE_MINIMAL)
-        writer_extra.writerow(header_extra)
-        writer_extra.writerow(row_extra)
-        output_extra.seek(0)
+        st.success(f"✅ File CSV generato per '{sAMAccountName}'")
 
-        df_extra = pd.DataFrame([row_extra], columns=header_extra)
-        st.dataframe(df_extra)
+else:  # Gestione Modifiche AD
+    st.subheader("Gestione Modifiche AD")
 
-        st.download_button("📥 Scarica CSV Extra", output_extra.getvalue(), f"{cognome}_{nome[0]}_extra.csv", "text/csv")
+    num_righe = st.number_input("Quante righe vuoi inserire?", min_value=1, max_value=20, value=1, step=1)
+    modifiche = []
 
-        st.success(f"✅ File CSV generati con successo per '{sAMAccountName}'")
-
-# === GESTIONE MODIFICHE AD ===
-elif funzione == "Gestione Modifiche AD":
-    st.title("Gestione Modifiche Active Directory")
-
-    st.markdown("Compila uno o più campi da modificare per ogni utenza. Il campo `sAMAccountName` è obbligatorio.")
-
-    num_righe = st.number_input("Quante modifiche vuoi fare (numero di righe)?", min_value=1, max_value=20, value=1)
-
-    campi_modificabili = [
-        "OU", "DisplayName", "GivenName", "Surname", "employeeID", "department",
-        "Description", "ExpireDate", "userprincipalname", "mail", "mobile",
-        "RimozioneGruppo", "InserimentoGruppo", "disable", "moveToOU", "telephoneNumber", "company"
-    ]
-
-    righe_modifica = []
     for i in range(num_righe):
-        st.subheader(f"Modifica {i+1}")
-        sam = st.text_input(f"[{i+1}] sAMAccountName", key=f"sam_{i}").strip()
-        campi_scelti = st.multiselect(f"[{i+1}] Campi da modificare", campi_modificabili, key=f"campi_{i}")
+        with st.expander(f"Riga {i+1}"):
+            modifica = {key: "" for key in header_modifica}
+            modifica["sAMAccountName"] = st.text_input(f"[{i+1}] sAMAccountName *", key=f"user_{i}")
 
-        riga = {"sAMAccountName": sam}
-        for campo in campi_scelti:
-            valore = st.text_input(f"[{i+1}] Valore per {campo}", key=f"{campo}_{i}")
-            if campo == "ExpireDate" and valore:
-                try:
-                    valore = formatta_data(valore)
-                except:
-                    st.warning(f"⚠️ Data non valida nella riga {i+1}")
-            riga[campo] = valore
-        righe_modifica.append(riga)
+            campi_selezionati = st.multiselect(
+                f"[{i+1}] Seleziona i campi da modificare",
+                [k for k in header_modifica if k != "sAMAccountName"],
+                key=f"campi_{i}"
+            )
+
+            for campo in campi_selezionati:
+                modifica[campo] = st.text_input(f"[{i+1}] {campo}", key=f"{campo}_{i}")
+
+            modifiche.append(modifica)
 
     if st.button("Genera CSV Modifiche"):
-        header = ["sAMAccountName"] + list({k for r in righe_modifica for k in r.keys() if k != "sAMAccountName"})
-        output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=header)
+        output_modifiche = io.StringIO()
+        writer = csv.DictWriter(output_modifiche, fieldnames=header_modifica)
         writer.writeheader()
-        for r in righe_modifica:
-            writer.writerow(r)
-        output.seek(0)
+        writer.writerows(modifiche)
+        output_modifiche.seek(0)
 
-        df = pd.DataFrame(righe_modifica)
-        st.dataframe(df)
+        df_modifiche = pd.DataFrame(modifiche)
+        st.dataframe(df_modifiche)
 
-        st.download_button("📥 Scarica CSV Modifiche", output.getvalue(), "modifiche_AD.csv", "text/csv")
-        st.success("✅ File CSV delle modifiche generato con successo!")
+        st.download_button(
+            label="📥 Scarica CSV Modifiche",
+            data=output_modifiche.getvalue(),
+            file_name="modifiche_utenti.csv",
+            mime="text/csv"
+        )
+
+        st.success("✅ CSV modifiche generato con successo.")
