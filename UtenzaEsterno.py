@@ -119,6 +119,7 @@ if funzionalita == "Gestione Creazione Utenze":
             email = f"{cognome.lower()}{nome[0].lower()}@consip.it"
         else:
             email = st.text_input("Email Personalizzata", "", key="Email").strip()
+            inserimento_gruppo = "O365 Office App"  # Modifica campo InserimentoGruppo se l'email non è necessaria
 
     employee_number = codice_fiscale
 
