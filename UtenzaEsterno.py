@@ -128,8 +128,11 @@ if funzionalita == "Gestione Creazione Utenze":
         mobile = f"+39 {numero_telefono}" if numero_telefono else ""
         description = description_input if description_input else "<PC>"
 
-        if not email_flag:
-            inserimento_gruppo = "O365 Office App"
+        # Gestione dell'email
+        if tipo_utente == "Esterno" and dipendente == "Consulente" and not email_flag:
+            mail = email  # Email personalizzata se "No"
+        else:
+            mail = f"{sAMAccountName}@consip.it"  # Default email per gli altri casi
 
         # Composizione dei campi GivenName e Surname
         given_name = f"{nome} {secondo_nome}".strip()
@@ -138,7 +141,7 @@ if funzionalita == "Gestione Creazione Utenze":
         row = [
             sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, given_name, surname,
             employee_number, employee_id, department, description, "No", expire_date_formatted,
-            userprincipalname, email, mobile, "", inserimento_gruppo, "", "", telephone_number, company
+            userprincipalname, mail, mobile, "", inserimento_gruppo, "", "", telephone_number, company
         ]
 
         output_main = io.StringIO()
@@ -167,6 +170,7 @@ else:
 
     for i in range(num_righe):
         with st.expander(f"Riga {i+1}"):
+
             modifica = {key: "" for key in header_modifica}
             modifica["sAMAccountName"] = st.text_input(f"[{i+1}] sAMAccountName *", key=f"user_{i}")
 
