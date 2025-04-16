@@ -118,15 +118,11 @@ if funzionalita == "Gestione Creazione Utenze":
         esterno = tipo_utente == "Esterno"
         sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
 
-        # Nuova logica per DisplayName, Name, cn
+        # Nome completo e display
         nome_completo = f"{nome} {secondo_nome} {cognome} {secondo_cognome}".strip()
         nome_completo = ' '.join(nome_completo.split())  # Rimuove spazi multipli
 
-        if esterno:
-            display_name = f"{nome_completo} (esterno)"
-        else:
-            display_name = nome_completo
-
+        display_name = f"{nome_completo} (esterno)" if esterno else nome_completo
         expire_date_formatted = formatta_data(expire_date) if esterno else ""
         userprincipalname = f"{sAMAccountName}@consip.it"
         mobile = f"+39 {numero_telefono}" if numero_telefono else ""
@@ -135,8 +131,12 @@ if funzionalita == "Gestione Creazione Utenze":
         if not email_flag:
             inserimento_gruppo = "O365 Office App"
 
+        # Composizione dei campi GivenName e Surname
+        given_name = f"{nome} {secondo_nome}".strip()
+        surname = f"{cognome} {secondo_cognome}".strip()
+
         row = [
-            sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, nome, cognome,
+            sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, given_name, surname,
             employee_number, employee_id, department, description, "No", expire_date_formatted,
             userprincipalname, email, mobile, "", inserimento_gruppo, "", "", telephone_number, company
         ]
