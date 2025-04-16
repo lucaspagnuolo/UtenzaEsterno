@@ -6,7 +6,7 @@ import io
 
 # Inizializza lo stato della sessione
 reset_keys = [
-    "Nome", "Cognome", "Secondo Nome", "Secondo Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
+    "Nome", "Secondo Nome", "Cognome", "Secondo Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
     "Data di Fine", "Employee ID", "Dipartimento", "Email", "flag_email"
 ]
 
@@ -38,7 +38,7 @@ def genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
     base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}{secondo_cognome.lower()}"
 
     if esterno:
-        limite = 16  # perché aggiungiamo ".ext" poi
+        limite = 16
         if len(base) > limite:
             base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}"
         base += ".ext"
@@ -47,7 +47,7 @@ def genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
         if len(base) > limite:
             base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}"
 
-    return base[:20]  # sempre massimo 20 anche in casi limite
+    return base[:20]
 
 # Se reset_fields è attivo, azzera i campi
 if st.session_state.reset_fields:
@@ -72,8 +72,8 @@ if funzionalita == "Gestione Creazione Utenze":
 
     nome = st.text_input("Nome", key="Nome").strip().capitalize()
     cognome = st.text_input("Cognome", key="Cognome").strip().capitalize()
-    secondo_nome = st.text_input("Secondo Nome", key="Secondo Nome").strip().capitalize()  # Sempre visibile
-    secondo_cognome = st.text_input("Secondo Cognome", key="Secondo Cognome").strip().capitalize()  # Sempre visibile
+    secondo_nome = st.text_input("Secondo Nome", key="Secondo Nome").strip().capitalize()
+    secondo_cognome = st.text_input("Secondo Cognome", key="Secondo Cognome").strip().capitalize()
     numero_telefono = st.text_input("Numero di Telefono", "", key="Numero di Telefono").replace(" ", "")
     description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>", key="Description").strip()
     codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
@@ -103,7 +103,6 @@ if funzionalita == "Gestione Creazione Utenze":
         telephone_number = ""
         company = ""
 
-    # Email flag per utente esterno
     email_flag = False
     email = ""
     if tipo_utente == "Esterno" and dipendente == "Consulente":
@@ -118,17 +117,26 @@ if funzionalita == "Gestione Creazione Utenze":
     if st.button("Genera CSV"):
         esterno = tipo_utente == "Esterno"
         sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
-        display_name = f"{cognome} {nome} (esterno)" if esterno else f"{cognome} {nome}"
+
+        # Nuova logica per DisplayName, Name, cn
+        nome_completo = f"{nome} {secondo_nome} {cognome} {secondo_cognome}".strip()
+        nome_completo = ' '.join(nome_completo.split())  # Rimuove spazi multipli
+
+        if esterno:
+            display_name = f"{nome_completo} (esterno)"
+        else:
+            display_name = nome_completo
+
         expire_date_formatted = formatta_data(expire_date) if esterno else ""
         userprincipalname = f"{sAMAccountName}@consip.it"
         mobile = f"+39 {numero_telefono}" if numero_telefono else ""
         description = description_input if description_input else "<PC>"
 
-        if not email_flag:  # Cambia InserimentoGruppo se email non presente
+        if not email_flag:
             inserimento_gruppo = "O365 Office App"
-        
+
         row = [
-            sAMAccountName, "SI", ou, display_name, display_name, display_name, nome, cognome,
+            sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, nome, cognome,
             employee_number, employee_id, department, description, "No", expire_date_formatted,
             userprincipalname, email, mobile, "", inserimento_gruppo, "", "", telephone_number, company
         ]
@@ -151,7 +159,7 @@ if funzionalita == "Gestione Creazione Utenze":
 
         st.success(f"✅ File CSV generato per '{sAMAccountName}'")
 
-else:  # Gestione Modifiche AD
+else:
     st.subheader("Gestione Modifiche AD")
 
     num_righe = st.number_input("Quante righe vuoi inserire?", min_value=1, max_value=20, value=1, step=1)
