@@ -35,22 +35,19 @@ def genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
     secondo_nome = secondo_nome.split()[0] if secondo_nome else ""
     secondo_cognome = secondo_cognome.split()[0] if secondo_cognome else ""
 
-    # Costruzione base: iniziali e cognomi
-    base = f"{nome[0].lower()}"
-    if secondo_nome:
-        base += f"{secondo_nome[0].lower()}"
-    base += f".{cognome.lower()}"
-    if secondo_cognome:
-        base += f"{secondo_cognome.lower()}"
+    base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}{secondo_cognome.lower()}"
 
-    # Se è esterno, limitiamo base a 16 caratteri e poi aggiungiamo '.ext'
     if esterno:
-        base = base[:16] + ".ext"
+        limite = 16  # perché aggiungiamo ".ext" poi
+        if len(base) > limite:
+            base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}"
+        base += ".ext"
     else:
-        # Se non esterno, limitiamo comunque a 20 caratteri totali
-        base = base[:20]
+        limite = 20
+        if len(base) > limite:
+            base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}"
 
-    return base
+    return base[:20]  # sempre massimo 20 anche in casi limite
 
 # Se reset_fields è attivo, azzera i campi
 if st.session_state.reset_fields:
