@@ -32,20 +32,22 @@ def formatta_data(data):
 def genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno):
     nome = nome.split()[0]
     cognome = cognome.split()[0]
-    secondo_nome = secondo_nome.split()[0] if secondo_nome else ""
-    secondo_cognome = secondo_cognome.split()[0] if secondo_cognome else ""
 
-    base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}{secondo_cognome.lower()}"
+    # Prendi l'iniziale se il campo è presente, altrimenti una stringa vuota
+    iniziale_secondo_nome = secondo_nome[0].lower() if secondo_nome else ""
+    iniziale_secondo_cognome = secondo_cognome.lower() if secondo_cognome else ""
+
+    base = f"{nome[0].lower()}{iniziale_secondo_nome}.{cognome.lower()}{iniziale_secondo_cognome}"
 
     if esterno:
         limite = 16
         if len(base) > limite:
-            base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}"
+            base = f"{nome[0].lower()}{iniziale_secondo_nome}.{cognome.lower()}"
         base += ".ext"
     else:
         limite = 20
         if len(base) > limite:
-            base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}"
+            base = f"{nome[0].lower()}{iniziale_secondo_nome}.{cognome.lower()}"
 
     return base[:20]
 
