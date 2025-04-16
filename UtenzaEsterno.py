@@ -38,22 +38,21 @@ def genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
     iniziale_secondo_nome = secondo_nome[0].lower() if secondo_nome else ""
     parte_secondo_cognome = secondo_cognome.lower() if secondo_cognome else ""
 
-    if esterno:
-        limite = 16
-    else:
-        limite = 20
+    suffix = ".ext" if esterno else ""
+    limite = 16 if esterno else 20
 
-    # Prima prova con la versione "estesa"
-    base = f"{nome.lower()}.{cognome.lower()}{parte_secondo_cognome}"
+    # Proviamo prima la forma estesa
+    base_estesa = f"{nome.lower()}.{cognome.lower()}{parte_secondo_cognome}"
+    sam_estesa = base_estesa + suffix
 
-    if len(base + (".ext" if esterno else "")) > limite:
-        # Se troppo lunga, usa la versione abbreviata
-        base = f"{nome[0].lower()}{iniziale_secondo_nome}.{cognome.lower()}{parte_secondo_cognome}"
+    if len(sam_estesa) <= limite:
+        return sam_estesa
 
-    if esterno:
-        base += ".ext"
+    # Altrimenti usiamo la forma abbreviata
+    base_abbreviata = f"{nome[0].lower()}{iniziale_secondo_nome}.{cognome.lower()}{parte_secondo_cognome}"
+    sam_abbreviato = base_abbreviata + suffix
 
-    return base[:limite]
+    return sam_abbreviato[:limite]
 
 # Se reset_fields è attivo, azzera i campi
 if st.session_state.reset_fields:
