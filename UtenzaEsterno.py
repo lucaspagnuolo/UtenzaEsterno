@@ -29,30 +29,33 @@ def formatta_data(data):
     return data
 
 # Funzione per generare sAMAccountName
-def genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno):
-    nome = nome.strip().split()[0]
-    cognome = cognome.strip().split()[0]
-    secondo_nome = secondo_nome.strip() if secondo_nome else ""
-    secondo_cognome = secondo_cognome.strip() if secondo_cognome else ""
+def genera_samaccountname(nome, cognome, secondo_nome="", secondo_cognome="", esterno=False):
+    # Pulizia e normalizzazione input
+    nome = nome.strip().lower()
+    secondo_nome = secondo_nome.strip().lower() if secondo_nome else ""
+    cognome = cognome.strip().lower()
+    secondo_cognome = secondo_cognome.strip().lower() if secondo_cognome else ""
 
-    iniziale_secondo_nome = secondo_nome[0].lower() if secondo_nome else ""
-    parte_secondo_cognome = secondo_cognome.lower() if secondo_cognome else ""
-
+    # Suffisso esterni
     suffix = ".ext" if esterno else ""
     limite = 16 if esterno else 20
 
-    # Proviamo prima la forma estesa
-    base_estesa = f"{nome.lower()}.{cognome.lower()}{parte_secondo_cognome}"
-    sam_estesa = base_estesa + suffix
+    # Tentativo 1: nome + secondo_nome + . + cognome + secondo_cognome
+    full_1 = f"{nome}{secondo_nome}.{cognome}{secondo_cognome}"
+    if len(full_1) <= limite:
+        return full_1 + suffix
 
-    if len(sam_estesa) <= limite:
-        return sam_estesa
+    # Tentativo 2: iniziali + . + cognome + secondo_cognome
+    iniz_nome = nome[0]
+    iniz_sec_nome = secondo_nome[0] if secondo_nome else ""
+    full_2 = f"{iniz_nome}{iniz_sec_nome}.{cognome}{secondo_cognome}"
+    if len(full_2) <= limite:
+        return full_2 + suffix
 
-    # Altrimenti usiamo la forma abbreviata
-    base_abbreviata = f"{nome[0].lower()}{iniziale_secondo_nome}.{cognome.lower()}{parte_secondo_cognome}"
-    sam_abbreviato = base_abbreviata + suffix
+    # Tentativo 3: iniziali + . + cognome (senza secondo cognome)
+    full_3 = f"{iniz_nome}{iniz_sec_nome}.{cognome}"
+    return full_3[:limite] + suffix  # Garantisce che il limite non venga superato anche in casi estremi
 
-    return sam_abbreviato[:limite]
 
 # Se reset_fields è attivo, azzera i campi
 if st.session_state.reset_fields:
