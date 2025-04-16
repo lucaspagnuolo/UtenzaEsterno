@@ -71,8 +71,8 @@ if funzionalita == "Gestione Creazione Utenze":
     tipo_utente = st.selectbox("Seleziona il tipo di utente:", ["Dipendente Consip", "Esterno"])
 
     nome = st.text_input("Nome", key="Nome").strip().capitalize()
-    cognome = st.text_input("Cognome", key="Cognome").strip().capitalize()
     secondo_nome = st.text_input("Secondo Nome", key="Secondo Nome").strip().capitalize()
+    cognome = st.text_input("Cognome", key="Cognome").strip().capitalize()
     secondo_cognome = st.text_input("Secondo Cognome", key="Secondo Cognome").strip().capitalize()
     numero_telefono = st.text_input("Numero di Telefono", "", key="Numero di Telefono").replace(" ", "")
     description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>", key="Description").strip()
