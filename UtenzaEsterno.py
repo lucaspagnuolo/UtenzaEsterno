@@ -6,8 +6,8 @@ import io
 
 # Inizializza lo stato della sessione
 reset_keys = [
-    "Nome", "Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
-    "Data di Fine", "Employee ID", "Dipartimento"
+    "Nome", "Cognome", "Secondo Nome", "Secondo Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
+    "Data di Fine", "Employee ID", "Dipartimento", "Email", "flag_email"
 ]
 
 if "reset_fields" not in st.session_state:
@@ -29,14 +29,22 @@ def formatta_data(data):
     return data
 
 # Funzione per generare sAMAccountName
-def genera_samaccountname(nome, cognome, esterno):
+def genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno):
     nome = nome.split()[0]
     cognome = cognome.split()[0]
-    base = f"{nome.lower()}.{cognome.lower()}"
+    secondo_nome = secondo_nome.split()[0] if secondo_nome else ""
+    secondo_cognome = secondo_cognome.split()[0] if secondo_cognome else ""
+    
+    base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}{secondo_cognome.lower()}"
+    
     if esterno:
         base += ".ext"
+    
+    # Se il nome completo è più lungo di 20 caratteri, tronchiamo
     if len(base) > 20:
-        base = f"{nome[0].lower()}.{cognome.lower()}"
+        base = f"{nome[0].lower()}{secondo_nome[0].lower()}.{cognome.lower()}{secondo_cognome.lower()}"
+        if len(base) > 20:
+            base = f"{nome[0].lower()}.{cognome.lower()}"
         if esterno:
             base += ".ext"
     return base[:20]
@@ -64,6 +72,8 @@ if funzionalita == "Gestione Creazione Utenze":
 
     nome = st.text_input("Nome", key="Nome").strip().capitalize()
     cognome = st.text_input("Cognome", key="Cognome").strip().capitalize()
+    secondo_nome = st.text_input("Secondo Nome", key="Secondo Nome").strip().capitalize()
+    secondo_cognome = st.text_input("Secondo Cognome", key="Secondo Cognome").strip().capitalize()
     numero_telefono = st.text_input("Numero di Telefono", "", key="Numero di Telefono").replace(" ", "")
     description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>", key="Description").strip()
     codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
@@ -93,21 +103,34 @@ if funzionalita == "Gestione Creazione Utenze":
         telephone_number = ""
         company = ""
 
+    # Email flag per utente esterno
+    email_flag = False
+    email = ""
+    if tipo_utente == "Esterno" and dipendente == "Consulente":
+        email_flag = st.radio("Email necessaria?", ["Sì", "No"], index=0, key="flag_email") == "Sì"
+        if email_flag:
+            email = f"{cognome.lower()}{nome[0].lower()}@consip.it"
+        else:
+            email = st.text_input("Email Personalizzata", "", key="Email").strip()
+
     employee_number = codice_fiscale
 
     if st.button("Genera CSV"):
         esterno = tipo_utente == "Esterno"
-        sAMAccountName = genera_samaccountname(nome, cognome, esterno)
+        sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
         display_name = f"{cognome} {nome} (esterno)" if esterno else f"{cognome} {nome}"
         expire_date_formatted = formatta_data(expire_date) if esterno else ""
         userprincipalname = f"{sAMAccountName}@consip.it"
         mobile = f"+39 {numero_telefono}" if numero_telefono else ""
         description = description_input if description_input else "<PC>"
 
+        if not email_flag:  # Cambia InserimentoGruppo se email non presente
+            inserimento_gruppo = "O365 Office App"
+        
         row = [
             sAMAccountName, "SI", ou, display_name, display_name, display_name, nome, cognome,
             employee_number, employee_id, department, description, "No", expire_date_formatted,
-            userprincipalname, userprincipalname, mobile, "", inserimento_gruppo, "", "", telephone_number, company
+            userprincipalname, email, mobile, "", inserimento_gruppo, "", "", telephone_number, company
         ]
 
         output_main = io.StringIO()
