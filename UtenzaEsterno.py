@@ -1,176 +1,187 @@
 import streamlit as st
-import csv
 import pandas as pd
-from datetime import datetime, timedelta
 import io
+import csv
+from datetime import datetime
 
-# Inizializza lo stato della sessione
-reset_keys = [
-    "Nome", "Secondo Nome", "Cognome", "Secondo Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
-    "Data di Fine", "Employee ID", "Dipartimento", "Email", "flag_email"
-]
-
-if "reset_fields" not in st.session_state:
-    st.session_state.reset_fields = False
-
-# Pulsante per pulire i campi
-if st.button("🔄 Pulisci Campi"):
-    st.session_state.reset_fields = True
-
-# Funzione per formattare la data
-def formatta_data(data):
-    for separatore in ["-", "/"]:
-        try:
-            giorno, mese, anno = map(int, data.split(separatore))
-            data_fine = datetime(anno, mese, giorno) + timedelta(days=1)
-            return data_fine.strftime("%m/%d/%Y 00:00")
-        except:
-            continue
-    return data
-
-# Funzione per generare sAMAccountName
-def genera_samaccountname(nome, cognome, secondo_nome="", secondo_cognome="", esterno=False):
-    # Pulizia e normalizzazione input
-    nome = nome.strip().lower()
-    secondo_nome = secondo_nome.strip().lower() if secondo_nome else ""
-    cognome = cognome.strip().lower()
-    secondo_cognome = secondo_cognome.strip().lower() if secondo_cognome else ""
-
-    # Suffisso esterni
-    suffix = ".ext" if esterno else ""
-    limite = 16 if esterno else 20
-
-    # Tentativo 1: nome + secondo_nome + . + cognome + secondo_cognome
-    full_1 = f"{nome}{secondo_nome}.{cognome}{secondo_cognome}"
-    if len(full_1) <= limite:
-        return full_1 + suffix
-
-    # Tentativo 2: iniziali + . + cognome + secondo_cognome
-    iniz_nome = nome[0]
-    iniz_sec_nome = secondo_nome[0] if secondo_nome else ""
-    full_2 = f"{iniz_nome}{iniz_sec_nome}.{cognome}{secondo_cognome}"
-    if len(full_2) <= limite:
-        return full_2 + suffix
-
-    # Tentativo 3: iniziali + . + cognome (senza secondo cognome)
-    full_3 = f"{iniz_nome}{iniz_sec_nome}.{cognome}"
-    return full_3[:limite] + suffix  # Garantisce che il limite non venga superato anche in casi estremi
-
-
-# Se reset_fields è attivo, azzera i campi
-if st.session_state.reset_fields:
-    for key in reset_keys:
-        st.session_state[key] = ""
-    st.session_state.reset_fields = False
-
-# Interfaccia
-st.title("Gestione Utenze Consip")
-
-funzionalita = st.radio("Scegli funzionalità:", ["Gestione Creazione Utenze", "Gestione Modifiche AD"])
+st.set_page_config(page_title="Generatore CSV Active Directory", layout="wide")
+st.title("🔐 Generatore CSV Active Directory")
 
 header_modifica = [
-    "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
-    "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
-    "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
-    "disable", "moveToOU", "telephoneNumber", "company"
+    "sAMAccountName", "creaUtente", "OU", "CN", "displayName", "name", "givenName", "sn",
+    "employeeNumber", "employeeID", "department", "description", "changePasswordAtLogon",
+    "ExpireDate", "userPrincipalName", "mail", "mobile", "manager", "Gruppi", "Gruppi da rimuovere",
+    "Gruppi da aggiungere", "telephoneNumber", "company"
 ]
 
-if funzionalita == "Gestione Creazione Utenze":
-    tipo_utente = st.selectbox("Seleziona il tipo di utente:", ["Dipendente Consip", "Esterno"])
+def formatta_data(data_str):
+    try:
+        return datetime.strptime(data_str.strip(), "%d/%m/%Y").strftime("%Y%m%d")
+    except:
+        return data_str
 
-    nome = st.text_input("Nome", key="Nome").strip().capitalize()
-    secondo_nome = st.text_input("Secondo Nome", key="Secondo Nome").strip().capitalize()
-    cognome = st.text_input("Cognome", key="Cognome").strip().capitalize()
-    secondo_cognome = st.text_input("Secondo Cognome", key="Secondo Cognome").strip().capitalize()
-    numero_telefono = st.text_input("Numero di Telefono", "", key="Numero di Telefono").replace(" ", "")
-    description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>", key="Description").strip()
-    codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
+def genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno=False):
+    nome = nome.lower().replace(" ", "")
+    cognome = cognome.lower().replace(" ", "")
+    secondo_nome = secondo_nome.lower().replace(" ", "")
+    secondo_cognome = secondo_cognome.lower().replace(" ", "")
+    base = f"{nome[0]}{cognome}"
+    if secondo_nome:
+        base += secondo_nome[0]
+    if secondo_cognome:
+        base += secondo_cognome[0]
+    if esterno:
+        base += "_ext"
+    return base
 
-    expire_date = ""
-    if tipo_utente == "Esterno":
-        expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine")
+funzionalita = st.sidebar.selectbox("Scegli Funzionalità", ["Creazione Utente", "Gestione Modifiche AD"])
 
-    department = ""
+if funzionalita == "Creazione Utente":
+    tipo_utente = st.radio("Tipo di Utenza", ["Dipendente Consip", "Esterno", "Azure"])
+
     if tipo_utente == "Dipendente Consip":
-        ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
+        nome = st.text_input("Nome", key="Nome").strip().capitalize()
+        secondo_nome = st.text_input("Secondo Nome", key="Secondo Nome").strip().capitalize()
+        cognome = st.text_input("Cognome", key="Cognome").strip().capitalize()
+        secondo_cognome = st.text_input("Secondo Cognome", key="Secondo Cognome").strip().capitalize()
+        codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
+        ou = "Utenti Consip"
         employee_id = st.text_input("Employee ID", "", key="Employee ID").strip()
         department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
-        inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GEDOGA-P-DOCGAR;GRPFreeDeskUser"
+        description = "<CD>"
+        inserimento_gruppo = "consip_wifi"
         telephone_number = "+39 06 854491"
         company = "Consip"
-    else:
-        dipendente = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"])
-        ou = "Utenti esterni - Consulenti" if dipendente == "Consulente" else "Utenti esterni - Somministrati e Stage"
-        employee_id = ""
-        department = "Utente esterno"
-        if dipendente == "Somministrato/Stage":
-            inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
-            department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
-        else:
-            inserimento_gruppo = "consip_vpn"
+        email_flag = st.checkbox("Vuoi ricevere un indirizzo email?", key="flag_email")
+        email = st.text_input("Email", key="Email").strip()
+        employee_number = codice_fiscale
+
+        if st.button("Genera CSV"):
+            esterno = False
+            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
+
+            nome_completo = f"{nome} {secondo_nome} {cognome} {secondo_cognome}".strip()
+            nome_completo = ' '.join(nome_completo.split())
+
+            display_name = f"{nome_completo}"
+            userprincipalname = f"{sAMAccountName}@consip.it" if email_flag else ""
+            mail = f"{sAMAccountName}@consip.it" if email_flag else ""
+
+            given_name = f"{nome} {secondo_nome}".strip()
+            surname = f"{cognome} {secondo_cognome}".strip()
+
+            row = [
+                sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, given_name, surname,
+                employee_number, employee_id, department, description, "No", "",
+                userprincipalname, mail, "", "", inserimento_gruppo, "", "", telephone_number, company
+            ]
+
+            output_main = io.StringIO()
+            writer_main = csv.writer(output_main)
+            writer_main.writerow(header_modifica)
+            writer_main.writerow(row)
+
+            st.download_button(
+                label="📥 Scarica CSV",
+                data=output_main.getvalue(),
+                file_name=f"{sAMAccountName}_creazione.csv",
+                mime="text/csv"
+            )
+    elif tipo_utente == "Esterno":
+        nome = st.text_input("Nome").strip().capitalize()
+        secondo_nome = st.text_input("Secondo Nome").strip().capitalize()
+        cognome = st.text_input("Cognome").strip().capitalize()
+        secondo_cognome = st.text_input("Secondo Cognome").strip().capitalize()
+        societa = st.text_input("Società Esterna").strip()
+        ou = "Utenti Esterni"
+        manager = st.text_input("Manager").strip()
+        mobile = st.text_input("Numero Mobile").strip()
+        email = st.text_input("Email Aziendale").strip()
+        description = societa
         telephone_number = ""
-        company = ""
+        company = societa
 
-    email_flag = False
-    email = ""
-    if tipo_utente == "Esterno" and dipendente == "Consulente":
-        email_flag = st.radio("Email necessaria?", ["Sì", "No"], index=0, key="flag_email") == "Sì"
-        if email_flag:
-            email = f"{cognome.lower()}{nome[0].lower()}@consip.it"
-        else:
-            email = st.text_input("Email Personalizzata", "", key="Email").strip()
-            inserimento_gruppo = "O365 Office App"  # Modifica campo InserimentoGruppo se l'email non è necessaria
+        if st.button("Genera CSV Esterno"):
+            esterno = True
+            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
 
-    employee_number = codice_fiscale
+            nome_completo = f"{nome} {secondo_nome} {cognome} {secondo_cognome}".strip()
+            nome_completo = ' '.join(nome_completo.split())
 
-    if st.button("Genera CSV"):
-        esterno = tipo_utente == "Esterno"
-        sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
+            display_name = f"{nome_completo} (esterno)"
+            userprincipalname = f"{sAMAccountName}@consip.it"
+            mail = email
 
-        # Nome completo e display
-        nome_completo = f"{nome} {secondo_nome} {cognome} {secondo_cognome}".strip()
-        nome_completo = ' '.join(nome_completo.split())  # Rimuove spazi multipli
+            given_name = f"{nome} {secondo_nome}".strip()
+            surname = f"{cognome} {secondo_cognome}".strip()
 
-        display_name = f"{nome_completo} (esterno)" if esterno else nome_completo
-        expire_date_formatted = formatta_data(expire_date) if esterno else ""
-        userprincipalname = f"{sAMAccountName}@consip.it"
-        mobile = f"+39 {numero_telefono}" if numero_telefono else ""
-        description = description_input if description_input else "<PC>"
+            row = [
+                sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, given_name, surname,
+                "", "", "", description, "No", "",
+                userprincipalname, mail, mobile, manager, "", "", "", telephone_number, company
+            ]
 
-        # Gestione dell'email
-        if tipo_utente == "Esterno" and dipendente == "Consulente" and not email_flag:
-            mail = email  # Email personalizzata se "No"
-        else:
-            mail = f"{sAMAccountName}@consip.it"  # Default email per gli altri casi
+            output_ext = io.StringIO()
+            writer_ext = csv.writer(output_ext)
+            writer_ext.writerow(header_modifica)
+            writer_ext.writerow(row)
 
-        # Composizione dei campi GivenName e Surname
-        given_name = f"{nome} {secondo_nome}".strip()
-        surname = f"{cognome} {secondo_cognome}".strip()
+            st.download_button(
+                label="📥 Scarica CSV Esterno",
+                data=output_ext.getvalue(),
+                file_name=f"{sAMAccountName}_esterno.csv",
+                mime="text/csv"
+            )
 
-        row = [
-            sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, given_name, surname,
-            employee_number, employee_id, department, description, "No", expire_date_formatted,
-            userprincipalname, mail, mobile, "", inserimento_gruppo, "", "", telephone_number, company
-        ]
+    elif tipo_utente == "Azure":
+        nome = st.text_input("Nome").strip().capitalize()
+        secondo_nome = st.text_input("Secondo Nome").strip().capitalize()
+        cognome = st.text_input("Cognome").strip().capitalize()
+        secondo_cognome = st.text_input("Secondo Cognome").strip().capitalize()
+        email_aziendale = st.text_input("Email Aziendale").strip()
+        manager = st.text_input("Manager").strip()
+        mobile = st.text_input("Mobile").strip()
+        profilazioni_sm = st.text_area("Profilare sulla SM (una per riga)").strip().splitlines()
 
-        output_main = io.StringIO()
-        writer_main = csv.writer(output_main, quoting=csv.QUOTE_MINIMAL)
-        writer_main.writerow(header_modifica)
-        writer_main.writerow(row)
-        output_main.seek(0)
+        if st.button("Genera Testo Richiesta Azure"):
+            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno=False)
+            nome_full = f"{nome} {secondo_nome}".strip()
+            cognome_full = f"{cognome} {secondo_cognome}".strip()
+            display_name = f"{cognome} {nome} (esterno)"
+            mail_consip = f"{sAMAccountName}@consip.it"
 
-        df_main = pd.DataFrame([row], columns=header_modifica)
-        st.dataframe(df_main)
+            testo = f"""Ciao.
+Richiedo cortesemente la definizione di una utenza su azure come di sotto indicato.
 
-        st.download_button(
-            label="📥 Scarica CSV Utente",
-            data=output_main.getvalue(),
-            file_name=f"{cognome}_{nome[0]}_utente.csv",
-            mime="text/csv"
-        )
+Tipo Utenza\tAzure
+Utenza\t{sAMAccountName}
+Alias\t{sAMAccountName}
+Nome\t{nome} {secondo_nome}
+Cognome\t{cognome} {secondo_cognome}
+Display name\t{display_name}
+Email aziendale\t{email_aziendale}
+Manager\t{manager}
+Cell\t{mobile}
+e-mail Consip\t{mail_consip}
 
-        st.success(f"✅ File CSV generato per '{sAMAccountName}'")
+Aggiungere all’utenza la MFA
+Aggiungere all’utenza le licenze:
+•\tMicrosoft Defender per Office 365 (piano 2)
+•\tOffice 365 E3"""
 
+            for profilo in profilazioni_sm:
+                if profilo.strip():
+                    testo += f"\nProfilare su SM {profilo.strip()}"
+
+            testo += f"""
+
+La comunicazioni delle credenziali dovranno essere inviate:
+•\tutenza via email a {email_aziendale}
+•\tpsw via SMS a {mobile}
+la url per la web mail è https://outlook.office.com/mail/{email_aziendale}
+Grazie
+"""
+            st.text_area("📄 Testo Richiesta Utenza Azure", testo, height=500)
 else:
     st.subheader("Gestione Modifiche AD")
 
@@ -179,7 +190,6 @@ else:
 
     for i in range(num_righe):
         with st.expander(f"Riga {i+1}"):
-
             modifica = {key: "" for key in header_modifica}
             modifica["sAMAccountName"] = st.text_input(f"[{i+1}] sAMAccountName *", key=f"user_{i}")
 
