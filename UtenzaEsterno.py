@@ -88,7 +88,7 @@ if funzionalita == "Gestione Creazione Utenze":
         secondo_nome = st.text_input("Secondo Nome", key="SecondoNome_Azure").strip().capitalize()
         cognome = st.text_input("Cognome", key="Cognome_Azure").strip().capitalize()
         secondo_cognome = st.text_input("Secondo Cognome", key="SecondoCognome_Azure").strip().capitalize()
-        telefono_aziendale = st.text_input("Telefono Aziendale", key="TelAziendale").strip()
+        telefono_aziendale = st.text_input("Telefono Aziendale (senza prefisso)", key="TelAziendale").strip()
         email_aziendale = st.text_input("Email Aziendale", key="EmailAziendale").strip()
         manager = st.text_input("Manager", key="Manager_Azure").strip()
         sm_text = st.text_area("Sulle quali SM va profilato (uno per riga)", key="SM_Azure")
@@ -103,6 +103,10 @@ if funzionalita == "Gestione Creazione Utenze":
                 secondo_cognome,
                 esterno=True
             )
+            # Prefisso telefono aziendale
+            telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
+            # Messaggio iniziale
+            st.markdown("Ciao.\nRichiedo cortesemente la definizione di una utenza su Azure come di sotto indicato.")
             # Crea tabella con le informazioni principali
             table = [
                 ["Campo", "Valore"],
@@ -114,7 +118,7 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Display name", f"{cognome} {nome}"],
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
-                ["Cell", telefono_aziendale],
+                ["Cell", telefono_fmt],
                 ["e-mail Consip", f"{sAMAccountName}@consip.it"]
             ]
             # Costruisci markdown della tabella
@@ -122,9 +126,9 @@ if funzionalita == "Gestione Creazione Utenze":
             table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
             for row in table[1:]:
                 table_md += "| " + " | ".join(row) + " |\n"
-
-            # Output tabella e punti separati da newline
             st.markdown(table_md)
+
+            # Dettagli aggiuntivi
             st.markdown("""
 Aggiungere all’utenza la MFA
 
@@ -138,13 +142,14 @@ Aggiungere all’utenza le licenze:
                 for sm in sm_list:
                     st.markdown(f"- {sm}@consip.it")
 
-            st.markdown("""
+            # Invio credenziali
+            st.markdown(f"""
 La comunicazione delle credenziali dovranno essere inviate:
 - utenza via email a {email_aziendale}
-- psw via SMS a {telefono_aziendale}
+- psw via SMS a {telefono_fmt}
 
 Grazie
-""".format(email_aziendale=email_aziendale, telefono_aziendale=telefono_aziendale))
+""" )
 
     # ---- BLOCCO DIPENDENTI e ESTERNI ----
     else:
