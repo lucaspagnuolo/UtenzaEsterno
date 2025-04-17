@@ -87,4 +87,173 @@ if funzionalita == "Gestione Creazione Utenze":
     if tipo_utente == "Azure":
         email_aziendale = st.text_input("Email Aziendale", key="Email Aziendale").strip()
         manager = st.text_input("Manager", key="Manager").strip()
-        profila
+        profila_sm = st.text_area("Profilare sulla SM (una per riga)", key="Profilare sulla SM").strip().split('\n')
+    else:
+        codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
+
+        if tipo_utente == "Esterno":
+            expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine")
+
+        if tipo_utente == "Dipendente Consip":
+            ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
+            employee_id = st.text_input("Employee ID", "", key="Employee ID").strip()
+            department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
+            inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GEDOGA-P-DOCGAR;GRPFreeDeskUser"
+            telephone_number = "+39 06 854491"
+            company = "Consip"
+        elif tipo_utente == "Esterno":
+            dipendente = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"])
+            ou = "Utenti esterni - Consulenti" if dipendente == "Consulente" else "Utenti esterni - Somministrati e Stage"
+            employee_id = ""
+            department = "Utente esterno"
+            if dipendente == "Somministrato/Stage":
+                inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
+                department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
+            else:
+                inserimento_gruppo = "consip_vpn"
+            telephone_number = ""
+            company = ""
+
+        email_flag = False
+        email = ""
+        if tipo_utente == "Esterno" and dipendente == "Consulente":
+            email_flag = st.radio("Email necessaria?", ["Sì", "No"], index=0, key="flag_email") == "Sì"
+            if email_flag:
+                email = f"{cognome.lower()}{nome.lower()}@consip.it"
+            else:
+                email = st.text_input("Email Personalizzata", "", key="Email").strip()
+                inserimento_gruppo = "O365 Office App"  # Modifica campo InserimentoGruppo se l'email non è necessaria
+
+    employee_number = codice_fiscale if tipo_utente != "Azure" else ""
+
+    if st.button("Genera CSV"):
+        esterno = tipo_utente in ["Esterno", "Azure"]
+        sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
+
+        # Nome completo e display
+        nome_completo = f"{nome} {secondo_nome} {cognome} {secondo_cognome}".strip()
+        nome_completo = ' '.join(nome_completo.split())  # Rimuove spazi multipli
+
+        display_name = f"{nome_completo} (esterno)" if esterno else nome_completo
+        expire_date_formatted = formatta_data(expire_date) if tipo_utente == "Esterno" else ""
+        userprincipalname = f"{sAMAccountName}@consip.it"
+        mobile = f"+39 {numero_telefono}" if numero_telefono else ""
+        description = description_input if description_input else "<PC>"
+
+        # Gestione dell'email
+        if tipo_utente == "Esterno" and dipendente == "Consulente" and not email_flag:
+            mail = email  # Email personalizzata se "No"
+        else:
+            mail = f"{sAMAccountName}@consip.it"  # Default email per gli altri casi
+
+        # Composizione dei campi GivenName e Surname
+        given_name = f"{nome} {secondo_nome}".strip()
+        surname = f"{cognome} {secondo_cognome}".strip()
+
+        if tipo_utente == "Azure":
+            # Genera il testo standardizzato per l'utente Azure
+            profila_sm_text = "\n".join([f"Profilare su SM {sm}" for sm in profila_sm if sm])
+            webmail_urls = "\n".join([f"la url per la web mail è https://outlook.office.com/mail/{sm}" for sm in profila_sm if sm])
+            azure_text = f"""
+            Ciao.
+            Richiedo cortesemente la definizione di una utenza su azure come di sotto indicato.
+            Tipo Utenza: Azure
+            Utenza: {sAMAccountName}
+            Alias: {sAMAccountName}
+            Nome: {nome} {secondo_nome}
+            Cognome: {cognome} {secondo_cognome}
+            Display name: {cognome} {nome} (esterno)
+            Email aziendale: {email_aziendale}
+            Manager: {manager}
+            Cell: {mobile}
+            e-mail Consip: {sAMAccountName}@consip.it
+
+            Aggiungere all’utenza la MFA
+            Aggiungere all’utenza le licenze:
+            • Microsoft Defender per Office 365 (piano 2)
+            • Office 365 E3
+            {profila_sm_text}
+
+            La comunicazioni delle credenziali dovranno essere inviate:
+            • utenza via email a {email_aziendale}
+            • psw via SMS a {mobile}
+            {webmail_urls}
+            Grazie
+            """
+
+            st.subheader("Anteprima Richiesta Utenza Azure")
+            st.text(azure_text)
+
+        else:
+            row = [
+                sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, given_name, surname,
+                employee_number, employee_id, department, description, "No", expire_date_formatted,
+                userprincipalname, mail, mobile, "", inserimento_gruppo, "", "", telephone_number, company
+            ]
+
+            output_main = io.StringIO()
+            writer_main = csv.writer(output_main, quoting=csv.QUOTE_MINIMAL)
+            writer_main.writerow(header_modifica)
+            writer_main.writerow(row)
+            output_main.seek(0)
+
+            df_main = pd.DataFrame([row], columns=header_modifica)
+            st.dataframe(df_main)
+
+            st.download_button(
+                label="📥 Scarica CSV Utente",
+                data=output_main.getvalue(),
+                file_name=f"{cognome}_{nome}_utente.csv",
+                mime="text/csv"
+            )
+
+            st.success(f"✅ File CSV generato per '{sAMAccountName}'")
+
+else:
+    st.subheader("Gestione Modifiche AD")
+
+    num_righe = st.number_input("Quante righe vuoi inserire?", min_value=1, max_value=20, value=1, step=1)
+    modifiche = []
+
+    for i in range(num_righe):
+        with st.expander(f"Riga {i+1}"):
+
+            modifica = {key: "" for key in header_modifica}
+            modifica["sAMAccountName"] = st.text_input(f"[{i+1}] sAMAccountName *", key=f"user_{i}")
+
+            campi_selezionati = st.multiselect(
+                f"[{i+1}] Seleziona i campi da modificare",
+                [k for k in header_modifica if k != "sAMAccountName"],
+                key=f"campi_{i}"
+            )
+
+            for campo in campi_selezionati:
+                valore = st.text_input(f"[{i+1}] {campo}", key=f"{campo}_{i}")
+                if campo == "ExpireDate":
+                    valore = formatta_data(valore)
+                elif campo == "mobile":
+                    valore = valore.strip()
+                    if valore e non inizia con "+":
+                        valore = f"+39 {valore}"
+                modifica[campo] = valore
+
+            modifiche.append(modifica)
+
+    if st.button("Genera CSV Modifiche"):
+        output_modifiche = io.StringIO()
+        writer = csv.DictWriter(output_modifiche, fieldnames=header_modifica, extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows(modifiche)
+        output_modifiche.seek(0)
+
+        df_modifiche = pd.DataFrame(modifiche, columns=header_modifica)
+        st.dataframe(df_modifiche)
+
+        st.download_button(
+            label="📥 Scarica CSV Modifiche",
+            data=output_modifiche.getvalue(),
+            file_name="modifiche_utenti.csv",
+            mime="text/csv"
+        )
+
+        st.success("✅ CSV modifiche generato con successo.")
