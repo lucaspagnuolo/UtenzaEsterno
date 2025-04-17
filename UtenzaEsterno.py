@@ -115,7 +115,7 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Alias", sAMAccountName],
                 ["Nome", ' '.join([nome, secondo_nome]).strip()],
                 ["Cognome", ' '.join([cognome, secondo_cognome]).strip()],
-                ["Display name", f"{cognome} {nome}"],
+                ["Display name", f"{cognome} {nome} (esterno)"],
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
                 ["Cell", telefono_fmt],
@@ -147,9 +147,13 @@ Aggiungere all’utenza le licenze:
 La comunicazione delle credenziali dovranno essere inviate:
 - utenza via email a {email_aziendale}
 - psw via SMS a {telefono_fmt}
-
-Grazie
-""" )
+""")
+            # URL web mail per ogni SM
+            if sm_list:
+                for sm in sm_list:
+                    st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
+            # Ringraziamenti
+            st.markdown("Grazie")
 
     # ---- BLOCCO DIPENDENTI e ESTERNI ----
     else:
