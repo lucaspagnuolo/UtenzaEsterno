@@ -86,7 +86,8 @@ if funzionalita == "Gestione Creazione Utenze":
         sm_list = [s.strip() for s in sm_text.split("\n") if s.strip()]
 
         if st.button("Genera Richiesta Azure"):
-            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome)
+            # Genera sAMAccountName con logica esterno (16 char + .ext)
+            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno=True)
             lines = [
                 "Ciao.",
                 "Richiedo cortesemente la definizione di una utenza su azure come di sotto indicato.",
@@ -163,7 +164,8 @@ if funzionalita == "Gestione Creazione Utenze":
                     st.error("Per email automatica inserisci Nome e Cognome.")
                     email = ""
             elif dip=="Consulente":
-                email = st.text_input("Email Personalizzata", "", key="Email").strip(); inserimento_gruppo="O365 Office App"
+                email = st.text_input("Email Personalizzata", "", key="Email").strip()
+                inserimento_gruppo="O365 Office App"
             else:
                 email = f"{genera_samaccountname(nome,cognome,secondo_nome,secondo_cognome)}@consip.it"
 
