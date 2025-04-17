@@ -37,7 +37,13 @@ def formatta_data(data):
             continue
     return data
 
-def genera_samaccountname(nome, cognome, secondo_nome="", secondo_cognome="", esterno=False):
+def genera_samaccountname(
+    nome: str,
+    cognome: str,
+    secondo_nome: str = "",
+    secondo_cognome: str = "",
+    esterno: bool = False
+) -> str:
     n = nome.strip().lower()
     sn = secondo_nome.strip().lower() if secondo_nome else ""
     c = cognome.strip().lower()
@@ -55,7 +61,10 @@ def genera_samaccountname(nome, cognome, secondo_nome="", secondo_cognome="", es
 
 # Interfaccia
 st.title("Gestione Utenze Consip")
-funzionalita = st.radio("Scegli funzionalità:", ["Gestione Creazione Utenze", "Gestione Modifiche AD"])
+funzionalita = st.radio(
+    "Scegli funzionalità:",
+    ["Gestione Creazione Utenze", "Gestione Modifiche AD"]
+)
 
 header_modifica = [
     "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
@@ -87,7 +96,13 @@ if funzionalita == "Gestione Creazione Utenze":
 
         if st.button("Genera Richiesta Azure"):
             # Genera sAMAccountName con logica esterno (16 char + .ext)
-            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno=True)
+            sAMAccountName = genera_samaccountname(
+                nome,
+                cognome,
+                secondo_nome,
+                secondo_cognome,
+                esterno=True
+            )
             lines = [
                 "Ciao.",
                 "Richiedo cortesemente la definizione di una utenza su azure come di sotto indicato.",
@@ -132,60 +147,97 @@ if funzionalita == "Gestione Creazione Utenze":
         cognome = st.text_input("Cognome", key="Cognome").strip().capitalize()
         secondo_cognome = st.text_input("Secondo Cognome", key="Secondo Cognome").strip().capitalize()
         numero_telefono = st.text_input("Numero di Telefono", "", key="Numero di Telefono").replace(" ", "")
-        description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>", key="Description").strip()
+        description_input = st.text_input(
+            "Description (lascia vuoto per <PC>)",
+            "<PC>",
+            key="Description"
+        ).strip()
         codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
 
         if tipo_utente == "Dipendente Consip":
             ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"], key="OU")
             employee_id = st.text_input("Employee ID", "", key="Employee ID").strip()
             department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
-            inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GEDOGA-P-DOCGAR;GRPFreeDeskUser"
+            inserimento_gruppo = (
+                "consip_vpn;dipendenti_wifi;mobile_wifi;"
+                "GEDOGA-P-DOCGAR;GRPFreeDeskUser"
+            )
             telephone_number = "+39 06 854491"
             company = "Consip"
         else:
-            dip = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"], key="tipo_esterno")
-            expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine")
-            ou = "Utenti esterni - Consulenti" if dip=="Consulente" else "Utenti esterni - Somministrati e Stage"
+            dip = st.selectbox(
+                "Tipo di Esterno:",
+                ["Consulente", "Somministrato/Stage"],
+                key="tipo_esterno"
+            )
+            expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine").strip()
+            ou = (
+                "Utenti esterni - Consulenti"
+                if dip == "Consulente" else
+                "Utenti esterni - Somministrati e Stage"
+            )
             employee_id = ""
             if dip == "Somministrato/Stage":
                 department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
-                inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
+                inserimento_gruppo = (
+                    "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
+                )
             else:
                 department = "Utente esterno"
                 inserimento_gruppo = "consip_vpn"
             telephone_number = ""
             company = ""
-            # email consulenti
-            email_flag = st.radio("Email necessaria?", ["Sì","No"], key="flag_email")== "Sì"
-            if dip=="Consulente" and email_flag:
+            email_flag = (
+                st.radio("Email necessaria?", ["Sì", "No"], key="flag_email") == "Sì"
+            )
+            if dip == "Consulente" and email_flag:
                 try:
                     email = f"{cognome.lower()}{nome[0].lower()}@consip.it"
                 except IndexError:
                     st.error("Per email automatica inserisci Nome e Cognome.")
                     email = ""
-            elif dip=="Consulente":
+            elif dip == "Consulente":
                 email = st.text_input("Email Personalizzata", "", key="Email").strip()
-                inserimento_gruppo="O365 Office App"
+                inserimento_gruppo = "O365 Office App"
             else:
-                email = f"{genera_samaccountname(nome,cognome,secondo_nome,secondo_cognome)}@consip.it"
+                email = (
+                    f"{genera_samaccountname(
+                        nome,
+                        cognome,
+                        secondo_nome,
+                        secondo_cognome
+                    )}@consip.it"
+                )
 
-        if st.button("Genera CSV"):
-            esterno = tipo_utente == "Esterno"
-            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
-            nome_completo = ' '.join([nome, secondo_nome, cognome, secondo_cognome]).strip()
-            display_name = f"{nome_completo} (esterno)" if esterno else nome_completo
+        if st.button("Genera CSV"): 
+            esterno = (tipo_utente == "Esterno")
+            sAMAccountName = genera_samaccountname(
+                nome, cognome, secondo_nome, secondo_cognome, esterno
+            )
+            nome_completo = ' '.join(
+                [nome, secondo_nome, cognome, secondo_cognome]
+            ).strip()
+            display_name = (
+                f"{nome_completo} (esterno)" if esterno else nome_completo
+            )
             expire_fmt = formatta_data(expire_date) if esterno else ""
             upn = f"{sAMAccountName}@consip.it"
             mobile = f"+39 {numero_telefono}" if numero_telefono else ""
             description = description_input or "<PC>"
-            mail = email if (tipo_utente=="Esterno" and dip=="Consulente" and not email_flag) else f"{sAMAccountName}@consip.it"
+            mail = (
+                email if (
+                    tipo_utente == "Esterno" and dip == "Consulente" and not email_flag
+                ) else f"{sAMAccountName}@consip.it"
+            )
             given = ' '.join([nome, secondo_nome]).strip()
             surn = ' '.join([cognome, secondo_cognome]).strip()
 
             row = [
-                sAMAccountName, "SI", ou, nome_completo, display_name, nome_completo, given, surn,
-                codice_fiscale, employee_id, department, description, "No", expire_fmt,
-                upn, mail, mobile, "", inserimento_gruppo, "", "", telephone_number, company
+                sAMAccountName, "SI", ou, nome_completo, display_name,
+                nome_completo, given, surn, codice_fiscale,
+                employee_id, department, description, "No", expire_fmt,
+                upn, mail, mobile, "", inserimento_gruppo, "", "",
+                telephone_number, company
             ]
 
             buf = io.StringIO()
@@ -207,24 +259,45 @@ if funzionalita == "Gestione Creazione Utenze":
 
 elif funzionalita == "Gestione Modifiche AD":
     st.subheader("Gestione Modifiche AD")
-    num_righe = st.number_input("Quante righe vuoi inserire?", 1, 20, 1)
+    num_righe = st.number_input(
+        "Quante righe vuoi inserire?", 1, 20, 1
+    )
     modifiche = []
     for i in range(num_righe):
         with st.expander(f"Riga {i+1}"):
-            m = {k:"" for k in header_modifica}
-            m["sAMAccountName"] = st.text_input(f"[{i+1}] sAMAccountName *", key=f"user_{i}")
-            scelti = st.multiselect(f"[{i+1}] Campi da modificare", [k for k in header_modifica if k!="sAMAccountName"], key=f"campi_{i}")
+            m = {k: "" for k in header_modifica}
+            m["sAMAccountName"] = st.text_input(
+                f"[{i+1}] sAMAccountName *", key=f"user_{i}"
+            )
+            scelti = st.multiselect(
+                f"[{i+1}] Campi da modificare", 
+                [k for k in header_modifica if k != "sAMAccountName"],
+                key=f"campi_{i}"
+            )
             for campo in scelti:
-                v = st.text_input(f"[{i+1}] {campo}", key=f"{campo}_{i}")
-                if campo=="ExpireDate": v = formatta_data(v)
-                if campo=="mobile" and v and not v.startswith("+"): v = f"+39 {v.strip()}"
+                v = st.text_input(
+                    f"[{i+1}] {campo}", key=f"{campo}_{i}"
+                )
+                if campo == "ExpireDate":
+                    v = formatta_data(v)
+                if campo == "mobile" and v and not v.startswith("+"):
+                    v = f"+39 {v.strip()}"
                 m[campo] = v
             modifiche.append(m)
     if st.button("Genera CSV Modifiche"):
         out = io.StringIO()
-        w = csv.DictWriter(out, fieldnames=header_modifica, extrasaction='ignore')
-        w.writeheader(); w.writerows(modifiche); out.seek(0)
+        w = csv.DictWriter(
+            out, fieldnames=header_modifica, extrasaction='ignore'
+        )
+        w.writeheader()
+        w.writerows(modifiche)
+        out.seek(0)
         df2 = pd.DataFrame(modifiche, columns=header_modifica)
         st.dataframe(df2)
-        st.download_button("📥 Scarica CSV Modifiche", out.getvalue(), "modifiche_utenti.csv", "text/csv")
+        st.download_button(
+            "📥 Scarica CSV Modifiche", 
+            out.getvalue(), 
+            "modifiche_utenti.csv", 
+            "text/csv"
+        )
         st.success("✅ CSV modifiche generato con successo.")
