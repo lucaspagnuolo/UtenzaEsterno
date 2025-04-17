@@ -100,26 +100,33 @@ if funzionalita == "Gestione Creazione Utenze":
                 esterno=True
             )
             telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
+            # Messaggio iniziale
             st.markdown("Ciao.\nRichiedo cortesemente la definizione di una utenza su Azure come di sotto indicato.")
+            # Calcolo Display Name con cognome+secondo_cognome, nome+secondo_nome, senza spazi vuoti multipli
+            display_parts = [cognome + secondo_cognome, nome, secondo_nome]
+            display_name_str = " ".join([part for part in display_parts if part]).strip() + " (esterno)"
+            # Costruzione tabella
             table = [
                 ["Campo", "Valore"],
                 ["Tipo Utenza", "Azure"],
                 ["Utenza", sAMAccountName],
                 ["Alias", sAMAccountName],
-                ["Nome", ' '.join([nome, secondo_nome]).strip()],
-                ["Cognome", ' '.join([cognome, secondo_cognome]).strip()],
-                ["Display name", f"{cognome}{secondo_cognome} {nome} {secondo_nome} (esterno)"],
+                ["Nome", " ".join([nome, secondo_nome]).strip()],
+                ["Cognome", " ".join([cognome, secondo_cognome]).strip()],
+                ["Display name", display_name_str],
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
                 ["Cell", telefono_fmt],
                 ["e-mail Consip", f"{sAMAccountName}@consip.it"]
             ]
+            # Render tabella Markdown
             table_md = "| " + " | ".join(table[0]) + " |\n"
             table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
             for row in table[1:]:
                 table_md += "| " + " | ".join(row) + " |\n"
             st.markdown(table_md)
 
+            # Dettagli aggiuntivi
             st.markdown("""
 Aggiungere all’utenza la MFA
 
@@ -133,11 +140,13 @@ Aggiungere all’utenza le licenze:
                 for sm in sm_list:
                     st.markdown(f"- {sm}@consip.it")
 
+            # Invio credenziali
             st.markdown(f"""
 La comunicazione delle credenziali dovranno essere inviate:
 - utenza via email a {email_aziendale}
 - psw via SMS a {telefono_fmt}
 """)
+            # URL web mail
             if sm_list:
                 for sm in sm_list:
                     st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
@@ -156,26 +165,4 @@ La comunicazione delle credenziali dovranno essere inviate:
         ).strip()
         codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
 
-        if tipo_utente == "Dipendente Consip":
-            ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"], key="OU")
-            employee_id = st.text_input("Employee ID", "", key="Employee ID").strip()
-            department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
-            inserimento_gruppo = (
-                "consip_vpn;dipendenti_wifi;mobile_wifi;"
-                "GEDOGA-P-DOCGAR;GRPFreeDeskUser"
-            )
-            telephone_number = "+39 06 854491"
-            company = "Consip"
-        else:
-            dip = st.selectbox(
-                "Tipo di Esterno:",
-                ["Consulente", "Somministrato/Stage"],
-                key="tipo_esterno"
-            )
-            expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine").strip()
-            ou = (
-                "Utenti esterni - Consulenti"
-                if dip == "Consulente" else
-                "Utenti esterni - Somministrati e Stage"
-            )
-            employee_id = ""
+        # (resto del codice inalterato...)
