@@ -87,7 +87,7 @@ if funzionalita == "Gestione Creazione Utenze":
 
         if st.button("Genera Richiesta Azure"):
             # Genera sAMAccountName con logica esterno (16 char + .ext)
-            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
+            sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno=T)
             lines = [
                 "Ciao.",
                 "Richiedo cortesemente la definizione di una utenza su azure come di sotto indicato.",
