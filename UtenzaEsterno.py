@@ -125,7 +125,7 @@ if funzionalita == "Gestione Creazione Utenze":
     employee_number = codice_fiscale
 
     if st.button("Genera CSV"):
-        esterno = tipo_utente == "Esterno"
+        esterno = tipo_utente in ["Esterno", "Azure"]
         sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno)
 
         # Nome completo e display
