@@ -12,11 +12,11 @@ reset_keys = [
  
 if "reset_fields" not in st.session_state:
     st.session_state.reset_fields = False
- 
+
 # Pulsante per pulire i campi
 if st.button("🔄 Pulisci Campi"):
     st.session_state.reset_fields = True
- 
+
 # Funzione per formattare la data
 def formatta_data(data):
     for separatore in ["-", "/"]:
@@ -27,7 +27,7 @@ def formatta_data(data):
         except:
             continue
     return data
- 
+
 # Funzione per generare sAMAccountName
 def genera_samaccountname(nome, cognome, secondo_nome="", secondo_cognome="", esterno=False):
     nome = nome.strip().lower()
@@ -39,31 +39,31 @@ def genera_samaccountname(nome, cognome, secondo_nome="", secondo_cognome="", es
     full_1 = f"{nome}{secondo_nome}.{cognome}{secondo_cognome}"
     if len(full_1) <= limite:
         return full_1 + suffix
-    iniz_nome = nome[0]
-    iniz_sec_nome = secondo_nome[0] if secondo_nome else ""
+    iniz_nome = nome[0] if nome else ''
+    iniz_sec_nome = secondo_nome[0] if secondo_nome else ''
     full_2 = f"{iniz_nome}{iniz_sec_nome}.{cognome}{secondo_cognome}"
     if len(full_2) <= limite:
         return full_2 + suffix
     full_3 = f"{iniz_nome}{iniz_sec_nome}.{cognome}"
     return full_3[:limite] + suffix
- 
+
 # Reset campi
 if st.session_state.reset_fields:
     for key in reset_keys:
         st.session_state[key] = ""
     st.session_state.reset_fields = False
- 
+
 # Titolo e scelta funzionalità
 st.title("Gestione Utenze Consip")
 funzionalita = st.radio("Scegli funzionalità:", ["Gestione Creazione Utenze", "Gestione Modifiche AD"])
- 
+
 header_modifica = [
     "sAMAccountName", "Creation", "OU", "Name", "DisplayName", "cn", "GivenName", "Surname",
     "employeeNumber", "employeeID", "department", "Description", "passwordNeverExpired",
     "ExpireDate", "userprincipalname", "mail", "mobile", "RimozioneGruppo", "InserimentoGruppo",
     "disable", "moveToOU", "telephoneNumber", "company"
 ]
- 
+
 if funzionalita == "Gestione Creazione Utenze":
     tipo_utente = st.selectbox("Seleziona il tipo di utente:", ["Dipendente Consip", "Esterno"])
     
@@ -114,7 +114,11 @@ if funzionalita == "Gestione Creazione Utenze":
         if dipendente == "Consulente":
             email_flag = st.radio("Email necessaria?", ["Sì", "No"], index=0, key="flag_email") == "Sì"
             if email_flag:
-                email = f"{cognome.lower()}{nome[0].lower()}@consip.it"
+                try:
+                    email = f"{cognome.lower()}{nome[0].lower()}@consip.it"
+                except IndexError:
+                    st.error("Per generare l'email automatica inserisci Nome e Cognome nei campi appositi.")
+                    email = ""
             else:
                 email = st.text_input("Email Personalizzata", "", key="Email").strip()
                 inserimento_gruppo = "O365 Office App"
@@ -153,7 +157,7 @@ if funzionalita == "Gestione Creazione Utenze":
         st.download_button(
             label="📥 Scarica CSV Utente",
             data=output_main.getvalue(),
-            file_name=f"{cognome}_{nome[0]}_utente.csv",
+            file_name=f"{cognome}_{nome[0] if nome else ''}_utente.csv",
             mime="text/csv"
         )
 
