@@ -83,46 +83,48 @@ if funzionalita == "Gestione Creazione Utenze":
     secondo_cognome = st.text_input("Secondo Cognome", key="Secondo Cognome").strip().capitalize()
     numero_telefono = st.text_input("Numero di Telefono", "", key="Numero di Telefono").replace(" ", "")
     description_input = st.text_input("Description (lascia vuoto per <PC>)", "<PC>", key="Description").strip()
-    codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
 
-    if tipo_utente == "Esterno":
-        expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine")
-
-    if tipo_utente == "Dipendente Consip":
-        ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
-        employee_id = st.text_input("Employee ID", "", key="Employee ID").strip()
-        department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
-        inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GEDOGA-P-DOCGAR;GRPFreeDeskUser"
-        telephone_number = "+39 06 854491"
-        company = "Consip"
-    elif tipo_utente == "Esterno":
-        dipendente = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"])
-        ou = "Utenti esterni - Consulenti" if dipendente == "Consulente" else "Utenti esterni - Somministrati e Stage"
-        employee_id = ""
-        department = "Utente esterno"
-        if dipendente == "Somministrato/Stage":
-            inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
-            department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
-        else:
-            inserimento_gruppo = "consip_vpn"
-        telephone_number = ""
-        company = ""
-    elif tipo_utente == "Azure":
+    if tipo_utente == "Azure":
         email_aziendale = st.text_input("Email Aziendale", key="Email Aziendale").strip()
         manager = st.text_input("Manager", key="Manager").strip()
         profila_sm = st.text_area("Profilare sulla SM (una per riga)", key="Profilare sulla SM").strip().split('\n')
+    else:
+        codice_fiscale = st.text_input("Codice Fiscale", "", key="Codice Fiscale").strip()
 
-    email_flag = False
-    email = ""
-    if tipo_utente == "Esterno" and dipendente == "Consulente":
-        email_flag = st.radio("Email necessaria?", ["Sì", "No"], index=0, key="flag_email") == "Sì"
-        if email_flag:
-            email = f"{cognome.lower()}{nome.lower()}@consip.it"
-        else:
-            email = st.text_input("Email Personalizzata", "", key="Email").strip()
-            inserimento_gruppo = "O365 Office App"  # Modifica campo InserimentoGruppo se l'email non è necessaria
+        if tipo_utente == "Esterno":
+            expire_date = st.text_input("Data di Fine (gg-mm-aaaa)", "30-06-2025", key="Data di Fine")
 
-    employee_number = codice_fiscale
+        if tipo_utente == "Dipendente Consip":
+            ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"])
+            employee_id = st.text_input("Employee ID", "", key="Employee ID").strip()
+            department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
+            inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GEDOGA-P-DOCGAR;GRPFreeDeskUser"
+            telephone_number = "+39 06 854491"
+            company = "Consip"
+        elif tipo_utente == "Esterno":
+            dipendente = st.selectbox("Tipo di Esterno:", ["Consulente", "Somministrato/Stage"])
+            ou = "Utenti esterni - Consulenti" if dipendente == "Consulente" else "Utenti esterni - Somministrati e Stage"
+            employee_id = ""
+            department = "Utente esterno"
+            if dipendente == "Somministrato/Stage":
+                inserimento_gruppo = "consip_vpn;dipendenti_wifi;mobile_wifi;GRPFreeDeskUser"
+                department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
+            else:
+                inserimento_gruppo = "consip_vpn"
+            telephone_number = ""
+            company = ""
+
+        email_flag = False
+        email = ""
+        if tipo_utente == "Esterno" and dipendente == "Consulente":
+            email_flag = st.radio("Email necessaria?", ["Sì", "No"], index=0, key="flag_email") == "Sì"
+            if email_flag:
+                email = f"{cognome.lower()}{nome.lower()}@consip.it"
+            else:
+                email = st.text_input("Email Personalizzata", "", key="Email").strip()
+                inserimento_gruppo = "O365 Office App"  # Modifica campo InserimentoGruppo se l'email non è necessaria
+
+    employee_number = codice_fiscale if tipo_utente != "Azure" else ""
 
     if st.button("Genera CSV"):
         esterno = tipo_utente in ["Esterno", "Azure"]
@@ -133,7 +135,7 @@ if funzionalita == "Gestione Creazione Utenze":
         nome_completo = ' '.join(nome_completo.split())  # Rimuove spazi multipli
 
         display_name = f"{nome_completo} (esterno)" if esterno else nome_completo
-        expire_date_formatted = formatta_data(expire_date) if esterno else ""
+        expire_date_formatted = formatta_data(expire_date) if tipo_utente == "Esterno" else ""
         userprincipalname = f"{sAMAccountName}@consip.it"
         mobile = f"+39 {numero_telefono}" if numero_telefono else ""
         description = description_input if description_input else "<PC>"
@@ -151,6 +153,7 @@ if funzionalita == "Gestione Creazione Utenze":
         if tipo_utente == "Azure":
             # Genera il testo standardizzato per l'utente Azure
             profila_sm_text = "\n".join([f"Profilare su SM {sm}" for sm in profila_sm if sm])
+            webmail_urls = "\n".join([f"la url per la web mail è https://outlook.office.com/mail/{sm}" for sm in profila_sm if sm])
             azure_text = f"""
             Ciao.
             Richiedo cortesemente la definizione di una utenza su azure come di sotto indicato.
@@ -174,7 +177,7 @@ if funzionalita == "Gestione Creazione Utenze":
             La comunicazioni delle credenziali dovranno essere inviate:
             • utenza via email a {email_aziendale}
             • psw via SMS a {mobile}
-            la url per la web mail è https://outlook.office.com/mail/{email_aziendale}
+            {webmail_urls}
             Grazie
             """
 
