@@ -103,42 +103,48 @@ if funzionalita == "Gestione Creazione Utenze":
                 secondo_cognome,
                 esterno=True
             )
-            lines = [
-                "Ciao.",
-                "Richiedo cortesemente la definizione di una utenza su azure come di sotto indicato.",
-                f"Tipo Utenza\tAzure",
-                f"Utenza\t{sAMAccountName}",
-                f"Alias\t{sAMAccountName}",
-                f"Nome\t{' '.join([nome, secondo_nome]).strip()}",
-                f"Cognome\t{' '.join([cognome, secondo_cognome]).strip()}",
-                f"Display name\t{cognome} {nome}",
-                f"Email aziendale\t{email_aziendale}",
-                f"Manager\t{manager}",
-                f"Cell\t{telefono_aziendale}",
-                f"e-mail Consip\t{sAMAccountName}@consip.it",
-                "",
-                "Aggiungere all’utenza la MFA",
-                "Aggiungere all’utenza le licenze:",
-                "• Microsoft Defender per Office 365 (piano 2)",
-                "• Office 365 E3",
+            # Crea tabella con le informazioni principali
+            table = [
+                ["Campo", "Valore"],
+                ["Tipo Utenza", "Azure"],
+                ["Utenza", sAMAccountName],
+                ["Alias", sAMAccountName],
+                ["Nome", ' '.join([nome, secondo_nome]).strip()],
+                ["Cognome", ' '.join([cognome, secondo_cognome]).strip()],
+                ["Display name", f"{cognome} {nome}"],
+                ["Email aziendale", email_aziendale],
+                ["Manager", manager],
+                ["Cell", telefono_aziendale],
+                ["e-mail Consip", f"{sAMAccountName}@consip.it"]
             ]
-            if sm_list:
-                lines.append("Profilare su SM:")
-                for sm in sm_list:
-                    lines.append(f"{sm}@consip.it")
-            lines += [
-                "",
-                "La comunicazione delle credenziali dovranno essere inviate:",
-                f"• utenza via email a {email_aziendale}",
-                f"• psw via SMS a {telefono_aziendale}"
-            ]
-            if sm_list:
-                for sm in sm_list:
-                    lines.append(f"la url per la web mail è https://outlook.office.com/mail/{sm}")
-            lines.append("Grazie")
+            # Costruisci markdown della tabella
+            table_md = "| " + " | ".join(table[0]) + " |\n"
+            table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
+            for row in table[1:]:
+                table_md += "| " + " | ".join(row) + " |\n"
 
-            st.markdown("\n".join(lines))
-            st.success("✅ Richiesta Azure generata con successo.")
+            # Output tabella e punti separati da newline
+            st.markdown(table_md)
+            st.markdown("""
+Aggiungere all’utenza la MFA
+
+Aggiungere all’utenza le licenze:
+- Microsoft Defender per Office 365 (piano 2)
+- Office 365 E3
+""")
+
+            if sm_list:
+                st.markdown("Profilare su SM:")
+                for sm in sm_list:
+                    st.markdown(f"- {sm}@consip.it")
+
+            st.markdown("""
+La comunicazione delle credenziali dovranno essere inviate:
+- utenza via email a {email_aziendale}
+- psw via SMS a {telefono_aziendale}
+
+Grazie
+""".format(email_aziendale=email_aziendale, telefono_aziendale=telefono_aziendale))
 
     # ---- BLOCCO DIPENDENTI e ESTERNI ----
     else:
