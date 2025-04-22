@@ -74,6 +74,8 @@ header_modifica = [
 ]
 
 if funzionalita == "Gestione Creazione Utenze":
+
+    # * SELECTBOX PRIMO LIVELLO *
     tipo_utente = st.selectbox(
         "Seleziona il tipo di utente:",
         ["Dipendente Consip", "Esterno", "Azure"],
@@ -93,6 +95,7 @@ if funzionalita == "Gestione Creazione Utenze":
         sm_list = [s.strip() for s in sm_text.split("\n") if s.strip()]
 
         if st.button("Genera Richiesta Azure"):
+            # Genera sAMAccountName con logica esterno (16 char + .ext)
             sAMAccountName = genera_samaccountname(
                 nome,
                 cognome,
@@ -100,27 +103,25 @@ if funzionalita == "Gestione Creazione Utenze":
                 secondo_cognome,
                 esterno=True
             )
+            # Prefisso telefono aziendale
             telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
             # Messaggio iniziale
             st.markdown("Ciao.\nRichiedo cortesemente la definizione di una utenza su Azure come di sotto indicato.")
-            # Calcolo Display Name con cognome+secondo_cognome, nome+secondo_nome, senza spazi vuoti multipli
-            display_parts = [cognome + secondo_cognome, nome, secondo_nome]
-            display_name_str = " ".join([part for part in display_parts if part]).strip() + " (esterno)"
-            # Costruzione tabella
+            # Crea tabella con le informazioni principali
             table = [
                 ["Campo", "Valore"],
                 ["Tipo Utenza", "Azure"],
                 ["Utenza", sAMAccountName],
                 ["Alias", sAMAccountName],
-                ["Nome", " ".join([nome, secondo_nome]).strip()],
-                ["Cognome", " ".join([cognome, secondo_cognome]).strip()],
-                ["Display name", display_name_str],
+                ["Nome", ' '.join([nome, secondo_nome]).strip()],
+                ["Cognome", ' '.join([cognome, secondo_cognome]).strip()],
+                ["Display name", f"{cognome} {nome} (esterno)"],
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
                 ["Cell", telefono_fmt],
                 ["e-mail Consip", f"{sAMAccountName}@consip.it"]
             ]
-            # Render tabella Markdown
+            # Costruisci markdown della tabella
             table_md = "| " + " | ".join(table[0]) + " |\n"
             table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
             for row in table[1:]:
@@ -147,10 +148,11 @@ La comunicazione delle credenziali dovranno essere inviate:
 - utenza via email a {email_aziendale}
 - psw via SMS a {telefono_fmt}
 """)
-            # URL web mail
+            # URL web mail per ogni SM
             if sm_list:
                 for sm in sm_list:
                     st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
+            # Ringraziamenti
             st.markdown("Grazie")
 
     # ---- BLOCCO DIPENDENTI e ESTERNI ----
@@ -218,7 +220,7 @@ La comunicazione delle credenziali dovranno essere inviate:
                         nome,
                         cognome,
                         secondo_nome,
-                        segundo_cognome
+                        secondo_cognome
                     )}@consip.it"
                 )
 
