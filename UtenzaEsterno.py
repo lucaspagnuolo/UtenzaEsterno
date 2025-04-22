@@ -1,4 +1,29 @@
-import streamlit as st
+[18:43, 17/04/2025] Lcspo: import streamlit as st
+import csv
+import pandas as pd
+from datetime import datetime, timedelta
+import io
+
+# Inizializza lo stato della sessione
+reset_keys = [
+    "Nome", "Secondo Nome", "Cognome", "Secondo Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
+    "Data di Fine", "Employee ID", "Dipartimento", "Email", "flag_email",
+    # chiavi Azure
+    "Nome_Azure", "SecondoNome_Azure", "Cognome_Azure", "SecondoCognome_Azure",
+    "TelAziendale", "EmailAziendale", "Manager_Azure", "SM_Azure"
+]
+
+if "reset_fields" not in st.session_state:
+    st.session_state.reset_fields = False
+
+# Pulsante per pulire i campi
+if st.button("🔄 Pulisci Campi"):
+    st.session_state.reset_fields = True
+
+# Reset campi
+if st.session_state.reset_fields:
+    for key in…
+[18:50, 17/04/2025] Lcspo: import streamlit as st
 import csv
 import pandas as pd
 from datetime import datetime, timedelta
@@ -88,7 +113,7 @@ if funzionalita == "Gestione Creazione Utenze":
         secondo_nome = st.text_input("Secondo Nome", key="SecondoNome_Azure").strip().capitalize()
         cognome = st.text_input("Cognome", key="Cognome_Azure").strip().capitalize()
         secondo_cognome = st.text_input("Secondo Cognome", key="SecondoCognome_Azure").strip().capitalize()
-        telefono_aziendale = st.text_input("Telefono Aziendale (senza prefisso)", key="TelAziendale").strip()
+        telefono_aziendale = st.text_input("Telefono Aziendale", key="TelAziendale").strip()
         email_aziendale = st.text_input("Email Aziendale", key="EmailAziendale").strip()
         manager = st.text_input("Manager", key="Manager_Azure").strip()
         sm_text = st.text_area("Sulle quali SM va profilato (uno per riga)", key="SM_Azure")
@@ -103,10 +128,6 @@ if funzionalita == "Gestione Creazione Utenze":
                 secondo_cognome,
                 esterno=True
             )
-            # Prefisso telefono aziendale
-            telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
-            # Messaggio iniziale
-            st.markdown("Ciao.\nRichiedo cortesemente la definizione di una utenza su Azure come di sotto indicato.")
             # Crea tabella con le informazioni principali
             table = [
                 ["Campo", "Valore"],
@@ -115,10 +136,10 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Alias", sAMAccountName],
                 ["Nome", ' '.join([nome, secondo_nome]).strip()],
                 ["Cognome", ' '.join([cognome, secondo_cognome]).strip()],
-                ["Display name", f"{cognome} {nome} (esterno)"],
+                ["Display name", f"{cognome} {nome}"],
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
-                ["Cell", telefono_fmt],
+                ["Cell", telefono_aziendale],
                 ["e-mail Consip", f"{sAMAccountName}@consip.it"]
             ]
             # Costruisci markdown della tabella
@@ -126,9 +147,9 @@ if funzionalita == "Gestione Creazione Utenze":
             table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
             for row in table[1:]:
                 table_md += "| " + " | ".join(row) + " |\n"
-            st.markdown(table_md)
 
-            # Dettagli aggiuntivi
+            # Output tabella e punti separati da newline
+            st.markdown(table_md)
             st.markdown("""
 Aggiungere all’utenza la MFA
 
@@ -142,18 +163,13 @@ Aggiungere all’utenza le licenze:
                 for sm in sm_list:
                     st.markdown(f"- {sm}@consip.it")
 
-            # Invio credenziali
-            st.markdown(f"""
+            st.markdown("""
 La comunicazione delle credenziali dovranno essere inviate:
 - utenza via email a {email_aziendale}
-- psw via SMS a {telefono_fmt}
-""")
-            # URL web mail per ogni SM
-            if sm_list:
-                for sm in sm_list:
-                    st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
-            # Ringraziamenti
-            st.markdown("Grazie")
+- psw via SMS a {telefono_aziendale}
+
+Grazie
+""".format(email_aziendale=email_aziendale, telefono_aziendale=telefono_aziendale))
 
     # ---- BLOCCO DIPENDENTI e ESTERNI ----
     else:
