@@ -321,7 +321,7 @@ elif funzionalita == "Gestione Modifiche AD":
 Ciao.
 
 Si richiede modifica come da file {file_name_modifiche}
-archiviato al percorso \\srv_dati.consip.tesoro.it\AreaCondivisa\DEPSI\IC\AD_Modifiche
+archiviato al percorso \\\srv_dati.consip.tesoro.it\AreaCondivisa\DEPSI\IC\AD_Modifiche
 
 Grazie
 """)
