@@ -317,7 +317,7 @@ elif funzionalita == "Gestione Modifiche AD":
         st.dataframe(df2)
 
         # Messaggio di preview prima del download
-        st.markdown(rf"""
+        st.markdown(f"""
 Ciao.
 
 Si richiede modifica come da file {file_name_modifiche}
