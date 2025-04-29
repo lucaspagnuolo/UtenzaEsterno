@@ -317,14 +317,16 @@ elif funzionalita == "Gestione Modifiche AD":
         st.dataframe(df2)
 
         # Messaggio di preview prima del download
+        file_path = "\\srv_dati.consip.tesoro.it\AreaCondivisa\DEPSI\IC\AD_Modifiche"
         st.markdown(f"""
 Ciao.
 
 Si richiede modifica come da file {file_name_modifiche}
-archiviato al percorso \\\\srv_dati.consip.tesoro.it\\AreaCondivisa\\DEPSI\\IC\\AD_Modifiche
+archiviato al percorso `{file_path}`
 
 Grazie
-""")
+"""
+        )
 
         st.download_button(
             "📥 Scarica CSV Modifiche", 
