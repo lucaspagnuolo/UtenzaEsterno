@@ -315,6 +315,17 @@ elif funzionalita == "Gestione Modifiche AD":
         out.seek(0)
         df2 = pd.DataFrame(modifiche, columns=header_modifica)
         st.dataframe(df2)
+
+        # Messaggio di preview prima del download
+        st.markdown(rf"""
+Ciao.
+
+Si richiede modifica come da file {file_name_modifiche}
+archiviato al percorso \\srv_dati.consip.tesoro.it\AreaCondivisa\DEPSI\IC\AD_Modifiche
+
+Grazie
+""")
+
         st.download_button(
             "📥 Scarica CSV Modifiche", 
             out.getvalue(), 
