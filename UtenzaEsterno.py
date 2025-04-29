@@ -317,7 +317,7 @@ elif funzionalita == "Gestione Modifiche AD":
         st.dataframe(df2)
 
         # Messaggio di preview prima del download
-        file_path = "\\srv_dati.consip.tesoro.it\AreaCondivisa\DEPSI\IC\AD_Modifiche"
+        file_path = "\\\\srv_dati.consip.tesoro.it\AreaCondivisa\DEPSI\IC\AD_Modifiche"
         st.markdown(f"""
 Ciao.
 
