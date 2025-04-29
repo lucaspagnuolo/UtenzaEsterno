@@ -10,7 +10,7 @@ reset_keys = [
     "Data di Fine", "Employee ID", "Dipartimento", "Email", "flag_email",
     # chiavi Azure
     "Nome_Azure", "SecondoNome_Azure", "Cognome_Azure", "SecondoCognome_Azure",
-    "TelAziendale", "EmailAziendale", "Manager_Azure", "SM_Azure"
+    "TelAziendale", "EmailAziendale", "Manager_", "SM_"
 ]
 
 if "reset_fields" not in st.session_state:
@@ -104,7 +104,7 @@ if funzionalita == "Gestione Creazione Utenze":
             # Messaggio iniziale
             st.markdown("Ciao.\nRichiedo cortesemente la definizione di una utenza su Azure come di sotto indicato.")
             # Calcolo Display Name con cognome+secondo_cognome, nome+secondo_nome, senza spazi vuoti multipli
-            display_parts = [cognome + secondo_cognome, nome, secondo_nome]
+            display_parts = [cognome, secondo_cognome, nome, secondo_nome]
             display_name_str = " ".join([part for part in display_parts if part]).strip() + " (esterno)"
             # Costruzione tabella
             table = [
