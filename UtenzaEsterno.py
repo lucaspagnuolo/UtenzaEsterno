@@ -272,6 +272,13 @@ La comunicazione delle credenziali dovranno essere inviate:
 
 elif funzionalita == "Gestione Modifiche AD":
     st.subheader("Gestione Modifiche AD")
+    # Campo per il nome del file di download
+    file_name_modifiche = st.text_input(
+        "Come si deve chiamare il file?",
+        "modifiche_utenti.csv",
+        key="FileName_Modifiche"
+    )
+
     num_righe = st.number_input(
         "Quante righe vuoi inserire?", 1, 20, 1
     )
@@ -297,6 +304,7 @@ elif funzionalita == "Gestione Modifiche AD":
                     v = f"+39 {v.strip()}"
                 m[campo] = v
             modifiche.append(m)
+
     if st.button("Genera CSV Modifiche"):
         out = io.StringIO()
         w = csv.DictWriter(
@@ -310,7 +318,7 @@ elif funzionalita == "Gestione Modifiche AD":
         st.download_button(
             "📥 Scarica CSV Modifiche", 
             out.getvalue(), 
-            "modifiche_utenti.csv", 
+            file_name_modifiche, 
             "text/csv"
         )
         st.success("✅ CSV modifiche generato con successo.")
