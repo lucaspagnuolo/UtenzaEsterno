@@ -10,7 +10,7 @@ reset_keys = [
     "Data di Fine", "Employee ID", "Dipartimento", "Email", "flag_email",
     # chiavi Azure
     "Nome_Azure", "SecondoNome_Azure", "Cognome_Azure", "SecondoCognome_Azure",
-    "TelAziendale", "EmailAziendale", "Manager_", "SM_"
+    "TelAziendale", "EmailAziendale", "Manager_Azure", "SM_Azure"
 ]
 
 if "reset_fields" not in st.session_state:
@@ -37,6 +37,7 @@ def formatta_data(data):
             continue
     return data
 
+
 def genera_samaccountname(
     nome: str,
     cognome: str,
@@ -58,6 +59,21 @@ def genera_samaccountname(
         return cand + suffix
     cand = f"{(n[0] if n else '')}{(sn[0] if sn else '')}.{c}"
     return cand[:limit] + suffix
+
+
+def build_full_name(
+    cognome: str,
+    secondo_cognome: str,
+    nome: str,
+    secondo_nome: str,
+    esterno: bool = False
+) -> str:
+    parts = [cognome, secondo_cognome, nome, secondo_nome]
+    parts = [p for p in parts if p]
+    full = ' '.join(parts)
+    if esterno:
+        full += ' (esterno)'
+    return full
 
 # Interfaccia
 st.title("Gestione Utenze Consip")
@@ -94,27 +110,24 @@ if funzionalita == "Gestione Creazione Utenze":
 
         if st.button("Genera Richiesta Azure"):
             sAMAccountName = genera_samaccountname(
-                nome,
-                cognome,
-                secondo_nome,
-                secondo_cognome,
-                esterno=True
+                nome, cognome, secondo_nome, secondo_cognome, esterno=True
             )
             telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
-            # Messaggio iniziale
-            st.markdown("Ciao.\nRichiedo cortesemente la definizione di una utenza su Azure come di sotto indicato.")
-            # Calcolo Display Name con cognome+secondo_cognome, nome+secondo_nome, senza spazi vuoti multipli
-            display_parts = [cognome, secondo_cognome, nome, secondo_nome]
-            display_name_str = " ".join([part for part in display_parts if part]).strip() + " (esterno)"
+            display_name_str = build_full_name(
+                cognome, secondo_cognome, nome, secondo_nome, esterno=True
+            )
+
             # Costruzione tabella
             table = [
                 ["Campo", "Valore"],
                 ["Tipo Utenza", "Azure"],
                 ["Utenza", sAMAccountName],
                 ["Alias", sAMAccountName],
-                ["Nome", " ".join([nome, secondo_nome]).strip()],
-                ["Cognome", " ".join([cognome, secondo_cognome]).strip()],
-                ["Display name", display_name_str],
+                ["Name", build_full_name(cognome, secondo_cognome, nome, secondo_nome, esterno=False)],
+                ["DisplayName", display_name_str],
+                ["cn", display_name_str],
+                ["GivenName", ' '.join([nome, secondo_nome]).strip()],
+                ["Surname", ' '.join([cognome, secondo_cognome]).strip()],
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
                 ["Cell", telefono_fmt],
@@ -127,27 +140,25 @@ if funzionalita == "Gestione Creazione Utenze":
                 table_md += "| " + " | ".join(row) + " |\n"
             st.markdown(table_md)
 
-            # Dettagli aggiuntivi
             st.markdown("""
 Aggiungere all’utenza la MFA
 
 Aggiungere all’utenza le licenze:
 - Microsoft Defender per Office 365 (piano 2)
 - Office 365 E3
-""")
-
+"""
+            )
             if sm_list:
                 st.markdown("Profilare su SM:")
                 for sm in sm_list:
                     st.markdown(f"- {sm}@consip.it")
 
-            # Invio credenziali
             st.markdown(f"""
 La comunicazione delle credenziali dovranno essere inviate:
 - utenza via email a {email_aziendale}
 - psw via SMS a {telefono_fmt}
-""")
-            # URL web mail
+"""
+            )
             if sm_list:
                 for sm in sm_list:
                     st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
@@ -218,7 +229,7 @@ La comunicazione delle credenziali dovranno essere inviate:
                         nome,
                         cognome,
                         secondo_nome,
-                        segundo_cognome
+                        secondo_cognome
                     )}@consip.it"
                 )
 
@@ -227,12 +238,9 @@ La comunicazione delle credenziali dovranno essere inviate:
             sAMAccountName = genera_samaccountname(
                 nome, cognome, secondo_nome, secondo_cognome, esterno
             )
-            nome_completo = ' '.join(
-                [nome, secondo_nome, cognome, secondo_cognome]
-            ).strip()
-            display_name = (
-                f"{nome_completo} (esterno)" if esterno else nome_completo
-            )
+            cn = build_full_name(cognome, secondo_cognome, nome, secondo_nome, esterno)
+            nome_completo = cn.replace(" (esterno)", "")
+            display_name = cn
             expire_fmt = formatta_data(expire_date) if esterno else ""
             upn = f"{sAMAccountName}@consip.it"
             mobile = f"+39 {numero_telefono}" if numero_telefono else ""
@@ -247,7 +255,7 @@ La comunicazione delle credenziali dovranno essere inviate:
 
             row = [
                 sAMAccountName, "SI", ou, nome_completo, display_name,
-                nome_completo, given, surn, codice_fiscale,
+                cn, given, surn, codice_fiscale,
                 employee_id, department, description, "No", expire_fmt,
                 upn, mail, mobile, "", inserimento_gruppo, "", "",
                 telephone_number, company
@@ -270,13 +278,8 @@ La comunicazione delle credenziali dovranno essere inviate:
             )
             st.success(f"✅ File CSV generato per '{sAMAccountName}'")
 
-if funzionalita == "Gestione Creazione Utenze":
-    # ... (blocco Creazione Utenze rimane invariato) ...
-    pass
-
 elif funzionalita == "Gestione Modifiche AD":
     st.subheader("Gestione Modifiche AD")
-    # Campo per il nome del file di download
     file_name_modifiche = st.text_input(
         "Come si deve chiamare il file?",
         "modifiche_utenti.csv",
@@ -320,7 +323,6 @@ elif funzionalita == "Gestione Modifiche AD":
         df2 = pd.DataFrame(modifiche, columns=header_modifica)
         st.dataframe(df2)
 
-        # Messaggio di preview prima del download
         file_path = "\\srv_dati.consip.tesoro.it\\AreaCondivisa\\DEPSI\\IC\\AD_Modifiche"
         st.markdown(
             f"""Ciao.
