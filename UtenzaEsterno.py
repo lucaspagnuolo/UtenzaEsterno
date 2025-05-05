@@ -7,7 +7,7 @@ import io
 # Inizializza lo stato della sessione
 reset_keys = [
     "Nome", "Secondo Nome", "Cognome", "Secondo Cognome", "Numero di Telefono", "Description", "Codice Fiscale",
-    "Data di Fine", "Employee ID(MATR)", "Dipartimento", "Email", "flag_email",
+    "Data di Fine", "Employee ID", "Dipartimento", "Email", "flag_email",
     # chiavi Azure
     "Nome_Azure", "SecondoNome_Azure", "Cognome_Azure", "SecondoCognome_Azure",
     "TelAziendale", "EmailAziendale", "Manager_Azure", "SM_Azure"
@@ -183,7 +183,7 @@ La comunicazione delle credenziali dovranno essere inviate:
 
         if tipo_utente == "Dipendente Consip":
             ou = st.selectbox("OU", ["Utenti standard", "Utenti VIP"], key="OU")
-            employee_id = st.text_input("Employee ID(MATR)", "", key="Employee ID(MATR)").strip()
+            employee_id = st.text_input("Employee ID", "", key="Employee ID").strip()
             department = st.text_input("Dipartimento", "", key="Dipartimento").strip()
             inserimento_gruppo = (
                 "consip_vpn;dipendenti_wifi;mobile_wifi;"
