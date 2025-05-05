@@ -96,8 +96,8 @@ if funzionalita == "Gestione Creazione Utenze":
         key="tipo_utente"
     )
 
+    # Azure
     if tipo_utente == "Azure":
-        # ---- BLOCCO AZURE ----
         nome = st.text_input("Nome", key="Nome_Azure").strip().capitalize()
         secondo_nome = st.text_input("Secondo Nome", key="SecondoNome_Azure").strip().capitalize()
         cognome = st.text_input("Cognome", key="Cognome_Azure").strip().capitalize()
@@ -117,7 +117,7 @@ if funzionalita == "Gestione Creazione Utenze":
             telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
             display_name_str = build_full_name(cognome, secondo_cognome, nome, secondo_nome, esterno=True)
 
-            # Costruzione tabella
+            # Costruzione tabella base
             table = [
                 ["Campo", "Valore"],
                 ["Tipo Utenza", "Azure"],
@@ -132,9 +132,10 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Manager", manager],
                 ["Cell", telefono_fmt]
             ]
+            # Campo extra se Casella Personale
             if casella_personale:
-                table.append(["e-mail Consip", f"{sAMAccountName}@consip.it"]
-)
+                table.append(["e-mail Consip", f"{sAMAccountName}@consip.it"])
+
             # Render Markdown
             table_md = "| " + " | ".join(table[0]) + " |\n"
             table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
@@ -142,24 +143,26 @@ if funzionalita == "Gestione Creazione Utenze":
                 table_md += "| " + " | ".join(row) + " |\n"
             st.markdown(table_md)
 
+            # Licenze e SM se Casella Personale
             if casella_personale:
                 st.markdown("""
 Aggiungere all’utenza le licenze:
 - Microsoft Defender per Office 365 (piano 2)
 - Office 365 E3
-                """)
+""")
                 if sm_list:
                     st.markdown("Profilare su SM:")
                     for sm in sm_list:
                         st.markdown(f"- {sm}@consip.it")
 
-            st.markdown(f"""
+            # MFA e credenziali
+            st.markdown("""
 Aggiungere all’utenza la MFA
 
 La comunicazione delle credenziali dovranno essere inviate:
 - utenza via email a {email_aziendale}
 - psw via SMS a {telefono_fmt}
-"""")
+""".format(email_aziendale=email_aziendale, telefono_fmt=telefono_fmt))
             if casella_personale and sm_list:
                 for sm in sm_list:
                     st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
