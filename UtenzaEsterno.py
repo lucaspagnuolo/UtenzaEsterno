@@ -79,7 +79,7 @@ def build_full_name(
 st.title("Gestione Utenze Consip")
 funzionalita = st.radio(
     "Scegli funzionalità:",
-    ["Gestione Creazione Utenze", "Gestione Modifiche AD"]
+    ["Gestione Creazione Utenze", "Gestione Modifiche AD", "Deprovisioning"]
 )
 
 header_modifica = [
@@ -343,3 +343,96 @@ Grazie"""
             "text/csv"
         )
         st.success("✅ CSV modifiche generato con successo.")
+elif funzionalita == "Deprovisioning":
+    st.subheader("Deprovisioning Utente")
+
+    # 1) Input sAMAccountName
+    sam = st.text_input("Nome utente (sAMAccountName)", "").strip().lower()
+    st.markdown("---")
+
+    # 2) Caricamento file Excel
+    dl_file = st.file_uploader("Carica file DL (Excel)", type="xlsx")
+    sm_file = st.file_uploader("Carica file SM (Excel)", type="xlsx")
+    mg_file = st.file_uploader("Carica file Membri_Gruppi (Excel)", type="xlsx")
+
+    if st.button("Genera Deprovisioning"):
+        # Leggi i DataFrame (se caricati)
+        dl_df = pd.read_excel(dl_file) if dl_file else pd.DataFrame()
+        sm_df = pd.read_excel(sm_file) if sm_file else pd.DataFrame()
+        mg_df = pd.read_excel(mg_file) if mg_file else pd.DataFrame()
+
+        # 3) Estrai le liste DL e SM:  
+        #    – DL: colonna B = member, colonna F = DL  
+        dl_list = []
+        if not dl_df.empty:
+            dl_list = dl_df.loc[
+                dl_df.iloc[:,1].str.lower() == sam,  # colonna B
+                dl_df.columns[5]                   # colonna F
+            ].dropna().tolist()
+
+        #    – SM: colonna B = member, colonna A = SM
+        sm_list = []
+        if not sm_df.empty:
+            sm_list = sm_df.loc[
+                sm_df.iloc[:,1].str.lower() == sam,  # colonna B
+                sm_df.columns[0]                    # colonna A
+            ].dropna().tolist()
+
+        #    – Membri_Gruppi: colonna D = member, colonna A = group name
+        grp = mg_df.loc[
+            mg_df.iloc[:,3].str.lower() == sam,      # colonna D
+            mg_df.columns[0]                         # colonna A
+        ].dropna().tolist()
+
+        # 4) Costruzione delle righe
+        lines = [
+            f"Ciao,\nper {sam}@consip.it :",
+            "1. Disabilitare invio ad utente (Message Delivery Restrictions)",
+            "2. Impostare Hide dalla Rubrica",
+            "3. Disabilitare accesso Mailbox (Mailbox features – Disable Protocolli/OWA)",
+            f"4. Estrarre il PST (O365 eDiscovery) da archiviare in \\\\nasconsip2....\\backuppst\\03 - backup email cancellate\\{sam}@consip.it (in z7 con psw condivisa)",
+            "5. Rimuovere le appartenenze dall’utenza Azure",
+            "6. Rimuovere le applicazioni dall’utenza Azure",
+            "7. Rimozione abilitazione dalle DL"
+        ]
+
+        if dl_list:
+            for dl in dl_list:
+                lines.append(f"   - {dl}")
+        else:
+            lines.append("   ⚠️ Non sono state trovate DL all'utente indicato")
+
+        lines += [
+            "8. Disabilitare l’account di Azure",
+            "9. Rimozione abilitazione da SM"
+        ]
+
+        if sm_list:
+            for sm in sm_list:
+                lines.append(f"   - {sm}")
+        else:
+            lines.append("   ⚠️ Non sono state trovate SM profilate all'utente indicato")
+
+        # 10) Rimozione in AD dei gruppi O365
+        lines.append("10. Rimozione in AD del gruppo")
+        # sempre presenti:
+        lines.append("   - O365 Copilot Plus")
+        lines.append("   - O365 Teams Premium")
+        # cerca in grp se ci sono “O365 Utenti Standard/Pilota/Avanzati”
+        utenti_groups = [g for g in grp if g.lower().startswith("o365 utenti")]
+        if utenti_groups:
+            for g in utenti_groups:
+                lines.append(f"   - {g}")
+        else:
+            lines.append("   ⚠️ Non è stato trovato nessun gruppo O365 Utenti per l'utente")
+
+        # 11–14 passi finali
+        lines += [
+            "11. Disabilitazione utenza di dominio",
+            "12. Spostamento in dismessi/utenti",
+            "13. Cancellare la foto da Azure (se applicabile)",
+            "14. Rimozione Wi-Fi"
+        ]
+
+        # 5) Anteprima testo
+        st.text("\n".join(lines))
