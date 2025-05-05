@@ -361,30 +361,34 @@ elif funzionalita == "Deprovisioning":
         sm_df = pd.read_excel(sm_file) if sm_file else pd.DataFrame()
         mg_df = pd.read_excel(mg_file) if mg_file else pd.DataFrame()
 
-        # 3) Estrai le liste DL e SM:  
-        #    – DL: colonna B = member, colonna F = DL  
+        # 3) Estrai le liste DL
         dl_list = []
         if not dl_df.empty:
-            dl_list = dl_df.loc[
-                dl_df.iloc[:,1].str.lower() == sam,  # colonna B
-                dl_df.columns[5]                   # colonna F
-            ].dropna().tolist()
+            if dl_df.shape[1] > 5:
+                mask = dl_df.iloc[:, 1].astype(str).str.lower() == sam
+                dl_list = dl_df.loc[mask, dl_df.columns[5]].dropna().tolist()
+            else:
+                st.warning("⚠️ Il file DL non contiene almeno 6 colonne (B e F)")
 
-        #    – SM: colonna B = member, colonna A = SM
+        # 4) Estrai le liste SM
         sm_list = []
         if not sm_df.empty:
-            sm_list = sm_df.loc[
-                sm_df.iloc[:,1].str.lower() == sam,  # colonna B
-                sm_df.columns[0]                    # colonna A
-            ].dropna().tolist()
+            if sm_df.shape[1] > 1:
+                mask = sm_df.iloc[:, 1].astype(str).str.lower() == sam
+                sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
+            else:
+                st.warning("⚠️ Il file SM non contiene almeno 2 colonne (A e B)")
 
-        #    – Membri_Gruppi: colonna D = member, colonna A = group name
-        grp = mg_df.loc[
-            mg_df.iloc[:,3].str.lower() == sam,      # colonna D
-            mg_df.columns[0]                         # colonna A
-        ].dropna().tolist()
+        # 5) Estrai i gruppi da Membri_Gruppi
+        grp = []
+        if not mg_df.empty:
+            if mg_df.shape[1] > 3:
+                mask = mg_df.iloc[:, 3].astype(str).str.lower() == sam
+                grp = mg_df.loc[mask, mg_df.columns[0]].dropna().tolist()
+            else:
+                st.warning("⚠️ Il file Membri_Gruppi non contiene almeno 4 colonne (A e D)")
 
-        # 4) Costruzione delle righe
+        # 6) Costruzione delle righe di output
         lines = [
             f"Ciao,\nper {sam}@consip.it :",
             "1. Disabilitare invio ad utente (Message Delivery Restrictions)",
@@ -393,7 +397,7 @@ elif funzionalita == "Deprovisioning":
             f"4. Estrarre il PST (O365 eDiscovery) da archiviare in \\\\nasconsip2....\\backuppst\\03 - backup email cancellate\\{sam}@consip.it (in z7 con psw condivisa)",
             "5. Rimuovere le appartenenze dall’utenza Azure",
             "6. Rimuovere le applicazioni dall’utenza Azure",
-            "7. Rimozione abilitazione dalle DL"
+            "7. Rimozione abilitazione dalle DL",
         ]
 
         if dl_list:
@@ -402,10 +406,10 @@ elif funzionalita == "Deprovisioning":
         else:
             lines.append("   ⚠️ Non sono state trovate DL all'utente indicato")
 
-        lines += [
+        lines.extend([
             "8. Disabilitare l’account di Azure",
-            "9. Rimozione abilitazione da SM"
-        ]
+            "9. Rimozione abilitazione da SM",
+        ])
 
         if sm_list:
             for sm in sm_list:
@@ -415,10 +419,8 @@ elif funzionalita == "Deprovisioning":
 
         # 10) Rimozione in AD dei gruppi O365
         lines.append("10. Rimozione in AD del gruppo")
-        # sempre presenti:
         lines.append("   - O365 Copilot Plus")
         lines.append("   - O365 Teams Premium")
-        # cerca in grp se ci sono “O365 Utenti Standard/Pilota/Avanzati”
         utenti_groups = [g for g in grp if g.lower().startswith("o365 utenti")]
         if utenti_groups:
             for g in utenti_groups:
@@ -427,12 +429,13 @@ elif funzionalita == "Deprovisioning":
             lines.append("   ⚠️ Non è stato trovato nessun gruppo O365 Utenti per l'utente")
 
         # 11–14 passi finali
-        lines += [
+        lines.extend([
             "11. Disabilitazione utenza di dominio",
             "12. Spostamento in dismessi/utenti",
             "13. Cancellare la foto da Azure (se applicabile)",
-            "14. Rimozione Wi-Fi"
-        ]
+            "14. Rimozione Wi-Fi",
+        ])
 
-        # 5) Anteprima testo
+        # 7) Anteprima testo
         st.text("\n".join(lines))
+
