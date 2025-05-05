@@ -346,70 +346,66 @@ Grazie"""
 elif funzionalita == "Deprovisioning":
     st.subheader("Deprovisioning Utente")
 
-    # 1) Input sAMAccountName
     sam = st.text_input("Nome utente (sAMAccountName)", "").strip().lower()
     st.markdown("---")
 
-    # 2) Caricamento file Excel
     dl_file = st.file_uploader("Carica file DL (Excel)", type="xlsx")
     sm_file = st.file_uploader("Carica file SM (Excel)", type="xlsx")
     mg_file = st.file_uploader("Carica file Membri_Gruppi (Excel)", type="xlsx")
 
     if st.button("Genera Deprovisioning"):
-        # Leggi i DataFrame (se caricati)
         dl_df = pd.read_excel(dl_file) if dl_file else pd.DataFrame()
         sm_df = pd.read_excel(sm_file) if sm_file else pd.DataFrame()
         mg_df = pd.read_excel(mg_file) if mg_file else pd.DataFrame()
 
-        # Estrai DL (col B → member, col F → DL)
+        # Estrapolo DL, SM e Gruppi (stesso codice di prima)
         dl_list = []
         if not dl_df.empty and dl_df.shape[1] > 5:
             mask = dl_df.iloc[:, 1].astype(str).str.lower() == sam
             dl_list = dl_df.loc[mask, dl_df.columns[5]].dropna().tolist()
 
-        # Estrai SM (col B → member@consip.it, col A → SM)
         sm_list = []
         if not sm_df.empty and sm_df.shape[1] > 1:
             target = f"{sam}@consip.it"
             mask = sm_df.iloc[:, 1].astype(str).str.lower() == target
             sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
 
-        # Estrai Gruppi (col D → member, col A → group)
         grp = []
         if not mg_df.empty and mg_df.shape[1] > 3:
             mask = mg_df.iloc[:, 3].astype(str).str.lower() == sam
             grp = mg_df.loc[mask, mg_df.columns[0]].dropna().tolist()
 
-        # Costruisci la lista delle azioni
-        azioni = [
-            "Disabilitare invio ad utente (Message Delivery Restrictions)",
-            "Impostare Hide dalla Rubrica",
-            "Disabilitare accesso Mailbox (Mailbox features – Disable Protocolli/OWA)",
-            f"Estrarre il PST (O365 eDiscovery) da archiviare in \\\\nasconsip2....\\backuppst\\03 - backup email cancellate\\{sam}@consip.it (in z7 con psw condivisa)",
-            "Rimuovere le appartenenze dall’utenza Azure",
-            "Rimuovere le applicazioni dall’utenza Azure"
-        ]
+        # Creo una lista ordinata di azioni
+        azioni = []
+        azioni.append("Disabilitare invio ad utente (Message Delivery Restrictions)")
+        azioni.append("Impostare Hide dalla Rubrica")
+        azioni.append("Disabilitare accesso Mailbox (Mailbox features – Disable Protocolli/OWA)")
+        azioni.append(f"Estrarre il PST (O365 eDiscovery) da archiviare in \\\\nasconsip2....\\backuppst\\03 - backup email cancellate\\{sam}@consip.it (in z7 con psw condivisa)")
+        azioni.append("Rimuovere le appartenenze dall’utenza Azure")
+        azioni.append("Rimuovere le applicazioni dall’utenza Azure")
 
-        # Punto DL
+        # DL
         if dl_list:
             azioni.append("Rimozione abilitazione dalle DL")
         else:
             azioni.append("Rimozione abilitazione dalle DL (nessuna DL trovata)")
 
-        # Punto SM
+        # SM
         if sm_list:
             azioni.append("Rimozione abilitazione da SM")
         else:
             azioni.append("Rimozione abilitazione da SM (nessuna SM trovata)")
 
-        # Punto Gruppi O365
+        # Gruppi O365
         azioni.append("Rimozione in AD del gruppo:")
+        # sotto-voci sempre
         sub_o365 = ["O365 Copilot Plus", "O365 Teams Premium"]
         utenti_groups = [g for g in grp if g.lower().startswith("o365 utenti")]
         if utenti_groups:
             sub_o365 += utenti_groups
         else:
             sub_o365.append("Nessun gruppo O365 Utenti trovato")
+        # aggiungo le sotto-voci indentate
         azioni.extend(f"  - {g}" for g in sub_o365)
 
         # Ultimi passi
@@ -421,25 +417,12 @@ elif funzionalita == "Deprovisioning":
             "Rimozione Wi-Fi"
         ]
 
-        # Numerazione e corpo del testo
+        # Rendering numerato
         lines = [f"Ciao,\nper {sam}@consip.it :"]
-        for i, act in enumerate(azioni, start=1):
-            lines.append(f"{i}. {act}")
+        for idx, act in enumerate(azioni, start=1):
+            lines.append(f"{idx}. {act}")
 
-        # Riepilogo elementi mancanti
-        missing = []
-        if not dl_list:
-            missing.append("– Nessuna DL trovata")
-        if not sm_list:
-            missing.append("– Nessuna SM trovata")
-        if not utenti_groups:
-            missing.append("– Nessun gruppo “O365 Utenti” trovato")
-        if missing:
-            lines.append("")
-            lines.append("🔍 Riepilogo elementi mancanti:")
-            lines.extend(missing)
-
-        # Anteprima finale
         st.text("\n".join(lines))
+
 
 
