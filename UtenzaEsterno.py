@@ -361,82 +361,85 @@ elif funzionalita == "Deprovisioning":
         sm_df = pd.read_excel(sm_file) if sm_file else pd.DataFrame()
         mg_df = pd.read_excel(mg_file) if mg_file else pd.DataFrame()
 
-        # 3) Estrai le liste DL (col B → member, col F → DL)
+        # Estrai DL (col B → member, col F → DL)
         dl_list = []
-        if not dl_df.empty:
-            if dl_df.shape[1] > 5:
-                mask = dl_df.iloc[:, 1].astype(str).str.lower() == sam
-                dl_list = dl_df.loc[mask, dl_df.columns[5]].dropna().tolist()
-            else:
-                st.warning("⚠️ Il file DL non contiene almeno 6 colonne (B e F)")
+        if not dl_df.empty and dl_df.shape[1] > 5:
+            mask = dl_df.iloc[:, 1].astype(str).str.lower() == sam
+            dl_list = dl_df.loc[mask, dl_df.columns[5]].dropna().tolist()
 
-        # 4) Estrai le liste SM (col B → member con “@consip.it”, col A → SM)
+        # Estrai SM (col B → member@consip.it, col A → SM)
         sm_list = []
-        if not sm_df.empty:
-            if sm_df.shape[1] > 1:
-                target = f"{sam}@consip.it"
-                mask = sm_df.iloc[:, 1].astype(str).str.lower() == target
-                sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
-            else:
-                st.warning("⚠️ Il file SM non contiene almeno 2 colonne (A e B)")
+        if not sm_df.empty and sm_df.shape[1] > 1:
+            target = f"{sam}@consip.it"
+            mask = sm_df.iloc[:, 1].astype(str).str.lower() == target
+            sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
 
-        # 5) Estrai i gruppi da Membri_Gruppi (col D → member, col A → group)
+        # Estrai Gruppi (col D → member, col A → group)
         grp = []
-        if not mg_df.empty:
-            if mg_df.shape[1] > 3:
-                mask = mg_df.iloc[:, 3].astype(str).str.lower() == sam
-                grp = mg_df.loc[mask, mg_df.columns[0]].dropna().tolist()
-            else:
-                st.warning("⚠️ Il file Membri_Gruppi non contiene almeno 4 colonne (A e D)")
+        if not mg_df.empty and mg_df.shape[1] > 3:
+            mask = mg_df.iloc[:, 3].astype(str).str.lower() == sam
+            grp = mg_df.loc[mask, mg_df.columns[0]].dropna().tolist()
 
-        # 6) Costruzione delle righe di output
-        lines = [
-            f"Ciao,\nper {sam}@consip.it :",
-            "1. Disabilitare invio ad utente (Message Delivery Restrictions)",
-            "2. Impostare Hide dalla Rubrica",
-            "3. Disabilitare accesso Mailbox (Mailbox features – Disable Protocolli/OWA)",
-            f"4. Estrarre il PST (O365 eDiscovery) da archiviare in \\\\nasconsip2....\\backuppst\\03 - backup email cancellate\\{sam}@consip.it (in z7 con psw condivisa)",
-            "5. Rimuovere le appartenenze dall’utenza Azure",
-            "6. Rimuovere le applicazioni dall’utenza Azure",
-            "7. Rimozione abilitazione dalle DL",
+        # Costruisci la lista delle azioni
+        azioni = [
+            "Disabilitare invio ad utente (Message Delivery Restrictions)",
+            "Impostare Hide dalla Rubrica",
+            "Disabilitare accesso Mailbox (Mailbox features – Disable Protocolli/OWA)",
+            f"Estrarre il PST (O365 eDiscovery) da archiviare in \\\\nasconsip2....\\backuppst\\03 - backup email cancellate\\{sam}@consip.it (in z7 con psw condivisa)",
+            "Rimuovere le appartenenze dall’utenza Azure",
+            "Rimuovere le applicazioni dall’utenza Azure"
         ]
 
+        # Punto DL
         if dl_list:
-            for dl in dl_list:
-                lines.append(f"   - {dl}")
+            azioni.append("Rimozione abilitazione dalle DL")
         else:
-            lines.append("   ⚠️ Non sono state trovate DL all'utente indicato")
+            azioni.append("Rimozione abilitazione dalle DL (nessuna DL trovata)")
 
-        lines.extend([
-            "8. Disabilitare l’account di Azure",
-            "9. Rimozione abilitazione da SM",
-        ])
-
+        # Punto SM
         if sm_list:
-            for sm in sm_list:
-                lines.append(f"   - {sm}")
+            azioni.append("Rimozione abilitazione da SM")
         else:
-            lines.append("   ⚠️ Non sono state trovate SM profilate all'utente indicato")
+            azioni.append("Rimozione abilitazione da SM (nessuna SM trovata)")
 
-        # 10) Rimozione in AD dei gruppi O365
-        lines.append("10. Rimozione in AD del gruppo")
-        lines.append("   - O365 Copilot Plus")
-        lines.append("   - O365 Teams Premium")
+        # Punto Gruppi O365
+        azioni.append("Rimozione in AD del gruppo:")
+        sub_o365 = ["O365 Copilot Plus", "O365 Teams Premium"]
         utenti_groups = [g for g in grp if g.lower().startswith("o365 utenti")]
         if utenti_groups:
-            for g in utenti_groups:
-                lines.append(f"   - {g}")
+            sub_o365 += utenti_groups
         else:
-            lines.append("   ⚠️ Non è stato trovato nessun gruppo O365 Utenti per l'utente")
+            sub_o365.append("Nessun gruppo O365 Utenti trovato")
+        azioni.extend(f"  - {g}" for g in sub_o365)
 
-        # 11–14 passi finali
-        lines.extend([
-            "11. Disabilitazione utenza di dominio",
-            "12. Spostamento in dismessi/utenti",
-            "13. Cancellare la foto da Azure (se applicabile)",
-            "14. Rimozione Wi-Fi",
-        ])
+        # Ultimi passi
+        azioni += [
+            "Disabilitazione account di Azure",
+            "Disabilitazione utenza di dominio",
+            "Spostamento in dismessi/utenti",
+            "Cancellare la foto da Azure (se applicabile)",
+            "Rimozione Wi-Fi"
+        ]
 
-        # 7) Anteprima testo
+        # Numerazione e corpo del testo
+        lines = [f"Ciao,\nper {sam}@consip.it :"]
+        for i, act in enumerate(azioni, start=1):
+            lines.append(f"{i}. {act}")
+
+        # Riepilogo elementi mancanti
+        missing = []
+        if not dl_list:
+            missing.append("– Nessuna DL trovata")
+        if not sm_list:
+            missing.append("– Nessuna SM trovata")
+        if not utenti_groups:
+            missing.append("– Nessun gruppo “O365 Utenti” trovato")
+        if missing:
+            lines.append("")
+            lines.append("🔍 Riepilogo elementi mancanti:")
+            lines.extend(missing)
+
+        # Anteprima finale
         st.text("\n".join(lines))
+
 
