@@ -96,73 +96,84 @@ if funzionalita == "Gestione Creazione Utenze":
         key="tipo_utente"
     )
 
-    # ---- BLOCCO AZURE ----
-    if tipo_utente == "Azure":
-        nome = st.text_input("Nome", key="Nome_Azure").strip().capitalize()
-        secondo_nome = st.text_input("Secondo Nome", key="SecondoNome_Azure").strip().capitalize()
-        cognome = st.text_input("Cognome", key="Cognome_Azure").strip().capitalize()
-        secondo_cognome = st.text_input("Secondo Cognome", key="SecondoCognome_Azure").strip().capitalize()
-        telefono_aziendale = st.text_input("Telefono Aziendale (senza prefisso)", key="TelAziendale").strip()
-        email_aziendale = st.text_input("Email Aziendale", key="EmailAziendale").strip()
-        manager = st.text_input("Manager", key="Manager_Azure").strip()
+# ---- BLOCCO AZURE ----
+if tipo_utente == "Azure":
+    nome = st.text_input("Nome", key="Nome_Azure").strip().capitalize()
+    secondo_nome = st.text_input("Secondo Nome", key="SecondoNome_Azure").strip().capitalize()
+    cognome = st.text_input("Cognome", key="Cognome_Azure").strip().capitalize()
+    secondo_cognome = st.text_input("Secondo Cognome", key="SecondoCognome_Azure").strip().capitalize()
+    telefono_aziendale = st.text_input("Telefono Aziendale (senza prefisso)", key="TelAziendale").strip()
+    email_aziendale = st.text_input("Email Aziendale", key="EmailAziendale").strip()
+    manager = st.text_input("Manager", key="Manager_Azure").strip()
+    
+    casella_personale = st.radio("Casella Personale Consip", ("No", "Sì"), key="Casella_Personale_Azure")
+
+    sm_list = []
+    if casella_personale == "Sì":
         sm_text = st.text_area("Sulle quali SM va profilato (uno per riga)", key="SM_Azure")
         sm_list = [s.strip() for s in sm_text.split("\n") if s.strip()]
 
-        if st.button("Genera Richiesta Azure"):
-            sAMAccountName = genera_samaccountname(
-                nome, cognome, secondo_nome, secondo_cognome, esterno=True
-            )
-            telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
-            display_name_str = build_full_name(
-                cognome, secondo_cognome, nome, secondo_nome, esterno=True
-            )
+    if st.button("Genera Richiesta Azure"):
+        sAMAccountName = genera_samaccountname(
+            nome, cognome, secondo_nome, secondo_cognome, esterno=True
+        )
+        telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
+        display_name_str = build_full_name(
+            cognome, secondo_cognome, nome, secondo_nome, esterno=True
+        )
 
-            # Costruzione tabella
-            table = [
-                ["Campo", "Valore"],
-                ["Tipo Utenza", "Azure"],
-                ["Utenza", sAMAccountName],
-                ["Alias", sAMAccountName],
-                ["Name", build_full_name(cognome, secondo_cognome, nome, secondo_nome, esterno=False)],
-                ["DisplayName", display_name_str],
-                ["cn", display_name_str],
-                ["GivenName", ' '.join([nome, secondo_nome]).strip()],
-                ["Surname", ' '.join([cognome, secondo_cognome]).strip()],
-                ["Email aziendale", email_aziendale],
-                ["Manager", manager],
-                ["Cell", telefono_fmt],
-                ["e-mail Consip", f"{sAMAccountName}@consip.it"]
-            ]
-            # Render tabella Markdown
-            table_md = "| " + " | ".join(table[0]) + " |\n"
-            table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
-            for row in table[1:]:
-                table_md += "| " + " | ".join(row) + " |\n"
-            st.markdown(table_md)
+        # Costruzione tabella base
+        table = [
+            ["Campo", "Valore"],
+            ["Tipo Utenza", "Azure"],
+            ["Utenza", sAMAccountName],
+            ["Alias", sAMAccountName],
+            ["Name", build_full_name(cognome, secondo_cognome, nome, secondo_nome, esterno=False)],
+            ["DisplayName", display_name_str],
+            ["cn", display_name_str],
+            ["GivenName", ' '.join([nome, secondo_nome]).strip()],
+            ["Surname", ' '.join([cognome, secondo_cognome]).strip()],
+            ["Email aziendale", email_aziendale],
+            ["Manager", manager],
+            ["Cell", telefono_fmt]
+        ]
 
+        if casella_personale == "Sì":
+            table.append(["e-mail Consip", f"{sAMAccountName}@consip.it"])
+
+        # Render tabella Markdown
+        table_md = "| " + " | ".join(table[0]) + " |\n"
+        table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
+        for row in table[1:]:
+            table_md += "| " + " | ".join(row) + " |\n"
+        st.markdown(table_md)
+
+        # Output aggiuntivo in base alla casella personale
+        if casella_personale == "Sì":
             st.markdown("""
-Aggiungere all’utenza la MFA
-
 Aggiungere all’utenza le licenze:
 - Microsoft Defender per Office 365 (piano 2)
 - Office 365 E3
-"""
-            )
+""")
             if sm_list:
                 st.markdown("Profilare su SM:")
                 for sm in sm_list:
                     st.markdown(f"- {sm}@consip.it")
 
-            st.markdown(f"""
+        # Output comune
+        st.markdown("""
+Aggiungere all’utenza la MFA
+
 La comunicazione delle credenziali dovranno essere inviate:
-- utenza via email a {email_aziendale}
-- psw via SMS a {telefono_fmt}
-"""
-            )
-            if sm_list:
-                for sm in sm_list:
-                    st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
-            st.markdown("Grazie")
+- utenza via email a {}  
+- psw via SMS a {}
+""".format(email_aziendale, telefono_fmt))
+
+        if casella_personale == "Sì" and sm_list:
+            for sm in sm_list:
+                st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
+
+        st.markdown("Grazie")
 
     # ---- BLOCCO DIPENDENTI e ESTERNI ----
     else:
