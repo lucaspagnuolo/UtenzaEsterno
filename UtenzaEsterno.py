@@ -361,7 +361,7 @@ elif funzionalita == "Deprovisioning":
         sm_df = pd.read_excel(sm_file) if sm_file else pd.DataFrame()
         mg_df = pd.read_excel(mg_file) if mg_file else pd.DataFrame()
 
-        # 3) Estrai le liste DL
+        # 3) Estrai le liste DL (col B → member, col F → DL)
         dl_list = []
         if not dl_df.empty:
             if dl_df.shape[1] > 5:
@@ -370,16 +370,17 @@ elif funzionalita == "Deprovisioning":
             else:
                 st.warning("⚠️ Il file DL non contiene almeno 6 colonne (B e F)")
 
-        # 4) Estrai le liste SM
+        # 4) Estrai le liste SM (col B → member con “@consip.it”, col A → SM)
         sm_list = []
         if not sm_df.empty:
             if sm_df.shape[1] > 1:
-                mask = sm_df.iloc[:, 1].astype(str).str.lower() == sam
+                target = f"{sam}@consip.it"
+                mask = sm_df.iloc[:, 1].astype(str).str.lower() == target
                 sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
             else:
                 st.warning("⚠️ Il file SM non contiene almeno 2 colonne (A e B)")
 
-        # 5) Estrai i gruppi da Membri_Gruppi
+        # 5) Estrai i gruppi da Membri_Gruppi (col D → member, col A → group)
         grp = []
         if not mg_df.empty:
             if mg_df.shape[1] > 3:
