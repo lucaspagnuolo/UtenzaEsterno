@@ -361,65 +361,68 @@ elif funzionalita == "Deprovisioning":
         sm_df = pd.read_excel(sm_file) if sm_file else pd.DataFrame()
         mg_df = pd.read_excel(mg_file) if mg_file else pd.DataFrame()
 
-        # 3) Estrai le liste DL (col B → member, col F → DL)
+        # Estrai le liste DL (col B → member, col F → DL)
         dl_list = []
-        if not dl_df.empty:
-            if dl_df.shape[1] > 5:
-                mask = dl_df.iloc[:, 1].astype(str).str.lower() == sam
-                dl_list = dl_df.loc[mask, dl_df.columns[5]].dropna().tolist()
-            else:
-                st.warning("⚠️ Il file DL non contiene almeno 6 colonne (B e F)")
+        if not dl_df.empty and dl_df.shape[1] > 5:
+            mask = dl_df.iloc[:, 1].astype(str).str.lower() == sam
+            dl_list = dl_df.loc[mask, dl_df.columns[5]].dropna().tolist()
 
-        # 4) Estrai le liste SM (col B → member con “@consip.it”, col A → SM)
+        # Estrai le liste SM (col B → member con “@consip.it”, col A → SM)
         sm_list = []
-        if not sm_df.empty:
-            if sm_df.shape[1] > 1:
-                target = f"{sam}@consip.it"
-                mask = sm_df.iloc[:, 1].astype(str).str.lower() == target
-                sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
-            else:
-                st.warning("⚠️ Il file SM non contiene almeno 2 colonne (A e B)")
+        if not sm_df.empty and sm_df.shape[1] > 1:
+            target = f"{sam}@consip.it"
+            mask = sm_df.iloc[:, 1].astype(str).str.lower() == target
+            sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
 
-        # 5) Estrai i gruppi da Membri_Gruppi (col D → member, col A → group)
+        # Estrai i gruppi da Membri_Gruppi (col D → member, col A → group)
         grp = []
-        if not mg_df.empty:
-            if mg_df.shape[1] > 3:
-                mask = mg_df.iloc[:, 3].astype(str).str.lower() == sam
-                grp = mg_df.loc[mask, mg_df.columns[0]].dropna().tolist()
-            else:
-                st.warning("⚠️ Il file Membri_Gruppi non contiene almeno 4 colonne (A e D)")
+        if not mg_df.empty and mg_df.shape[1] > 3:
+            mask = mg_df.iloc[:, 3].astype(str).str.lower() == sam
+            grp = mg_df.loc[mask, mg_df.columns[0]].dropna().tolist()
 
-        # 6) Costruzione delle righe di output
+        # Inizializza lista delle righe e dei warning
         lines = [
-            f"Ciao,\nper {sam}@consip.it :",
-            "1. Disabilitare invio ad utente (Message Delivery Restrictions)",
-            "2. Impostare Hide dalla Rubrica",
-            "3. Disabilitare accesso Mailbox (Mailbox features – Disable Protocolli/OWA)",
-            f"4. Estrarre il PST (O365 eDiscovery) da archiviare in \\\\nasconsip2....\\backuppst\\03 - backup email cancellate\\{sam}@consip.it (in z7 con psw condivisa)",
-            "5. Rimuovere le appartenenze dall’utenza Azure",
-            "6. Rimuovere le applicazioni dall’utenza Azure",
-            "7. Rimozione abilitazione dalle DL",
+            f"Ciao,\nper {sam}@consip.it :"
         ]
+        warnings = []
+        step = 1  # Contatore numerazione
 
+        lines.append(f"{step}. Disabilitare invio ad utente (Message Delivery Restrictions)")
+        step += 1
+        lines.append(f"{step}. Impostare Hide dalla Rubrica")
+        step += 1
+        lines.append(f"{step}. Disabilitare accesso Mailbox (Mailbox features – Disable Protocolli/OWA)")
+        step += 1
+        lines.append(f"{step}. Estrarre il PST (O365 eDiscovery) da archiviare in \\\\nasconsip2....\\backuppst\\03 - backup email cancellate\\{sam}@consip.it (in z7 con psw condivisa)")
+        step += 1
+        lines.append(f"{step}. Rimuovere le appartenenze dall’utenza Azure")
+        step += 1
+        lines.append(f"{step}. Rimuovere le applicazioni dall’utenza Azure")
+        step += 1
+
+        # DL solo se presenti
         if dl_list:
+            lines.append(f"{step}. Rimozione abilitazione dalle DL")
             for dl in dl_list:
                 lines.append(f"   - {dl}")
+            step += 1
         else:
-            lines.append("   ⚠️ Non sono state trovate DL all'utente indicato")
+            warnings.append("⚠️ Non sono state trovate DL all'utente indicato")
 
-        lines.extend([
-            "8. Disabilitare l’account di Azure",
-            "9. Rimozione abilitazione da SM",
-        ])
+        lines.append(f"{step}. Disabilitare l’account di Azure")
+        step += 1
 
+        # SM solo se presenti
         if sm_list:
+            lines.append(f"{step}. Rimozione abilitazione da SM")
             for sm in sm_list:
                 lines.append(f"   - {sm}")
+            step += 1
         else:
-            lines.append("   ⚠️ Non sono state trovate SM profilate all'utente indicato")
+            warnings.append("⚠️ Non sono state trovate SM profilate all'utente indicato")
 
-        # 10) Rimozione in AD dei gruppi O365
-        lines.append("10. Rimozione in AD del gruppo")
+        # Gruppi O365
+        lines.append(f"{step}. Rimozione in AD del gruppo")
         lines.append("   - O365 Copilot Plus")
         lines.append("   - O365 Teams Premium")
         utenti_groups = [g for g in grp if g.lower().startswith("o365 utenti")]
@@ -427,18 +430,26 @@ elif funzionalita == "Deprovisioning":
             for g in utenti_groups:
                 lines.append(f"   - {g}")
         else:
-            lines.append("   ⚠️ Non è stato trovato nessun gruppo O365 Utenti per l'utente")
+            warnings.append("⚠️ Non è stato trovato nessun gruppo O365 Utenti per l'utente")
+        step += 1
 
-        # 11–14 passi finali
-        lines.extend([
-            "11. Disabilitazione utenza di dominio",
-            "12. Spostamento in dismessi/utenti",
-            "13. Cancellare la foto da Azure (se applicabile)",
-            "14. Rimozione Wi-Fi",
-        ])
+        # Passaggi finali
+        lines.append(f"{step}. Disabilitazione utenza di dominio")
+        step += 1
+        lines.append(f"{step}. Spostamento in dismessi/utenti")
+        step += 1
+        lines.append(f"{step}. Cancellare la foto da Azure (se applicabile)")
+        step += 1
+        lines.append(f"{step}. Rimozione Wi-Fi")
 
-        # 7) Anteprima testo
+        # Append warning alla fine
+        if warnings:
+            lines.append("")  # Riga vuota per separazione
+            lines.extend(warnings)
+
+        # Anteprima testo finale
         st.text("\n".join(lines))
+
 
 
 
