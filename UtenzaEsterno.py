@@ -346,46 +346,39 @@ Grazie"""
 elif funzionalita == "Deprovisioning":
     st.subheader("Deprovisioning Utente")
 
-    # 1) Input sAMAccountName
     sam = st.text_input("Nome utente (sAMAccountName)", "").strip().lower()
     st.markdown("---")
 
-    # 2) Caricamento file Excel
     dl_file = st.file_uploader("Carica file DL (Excel)", type="xlsx")
     sm_file = st.file_uploader("Carica file SM (Excel)", type="xlsx")
     mg_file = st.file_uploader("Carica file Membri_Gruppi (Excel)", type="xlsx")
 
     if st.button("Genera Deprovisioning"):
-        # Leggi i DataFrame (se caricati)
         dl_df = pd.read_excel(dl_file) if dl_file else pd.DataFrame()
         sm_df = pd.read_excel(sm_file) if sm_file else pd.DataFrame()
         mg_df = pd.read_excel(mg_file) if mg_file else pd.DataFrame()
 
-        # Estrai le liste DL (col B → member, col F → DL)
         dl_list = []
         if not dl_df.empty and dl_df.shape[1] > 5:
             mask = dl_df.iloc[:, 1].astype(str).str.lower() == sam
             dl_list = dl_df.loc[mask, dl_df.columns[5]].dropna().tolist()
 
-        # Estrai le liste SM (col B → member con “@consip.it”, col A → SM)
         sm_list = []
         if not sm_df.empty and sm_df.shape[1] > 1:
             target = f"{sam}@consip.it"
             mask = sm_df.iloc[:, 1].astype(str).str.lower() == target
             sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
 
-        # Estrai i gruppi da Membri_Gruppi (col D → member, col A → group)
         grp = []
         if not mg_df.empty and mg_df.shape[1] > 3:
             mask = mg_df.iloc[:, 3].astype(str).str.lower() == sam
             grp = mg_df.loc[mask, mg_df.columns[0]].dropna().tolist()
 
-        # Inizializza lista delle righe e dei warning
         lines = [
             f"Ciao,\nper {sam}@consip.it :"
         ]
         warnings = []
-        step = 1  # Contatore numerazione
+        step = 1
 
         lines.append(f"{step}. Disabilitare invio ad utente (Message Delivery Restrictions)")
         step += 1
@@ -400,7 +393,6 @@ elif funzionalita == "Deprovisioning":
         lines.append(f"{step}. Rimuovere le applicazioni dall’utenza Azure")
         step += 1
 
-        # DL solo se presenti
         if dl_list:
             lines.append(f"{step}. Rimozione abilitazione dalle DL")
             for dl in dl_list:
@@ -412,7 +404,6 @@ elif funzionalita == "Deprovisioning":
         lines.append(f"{step}. Disabilitare l’account di Azure")
         step += 1
 
-        # SM solo se presenti
         if sm_list:
             lines.append(f"{step}. Rimozione abilitazione da SM")
             for sm in sm_list:
@@ -421,7 +412,6 @@ elif funzionalita == "Deprovisioning":
         else:
             warnings.append("⚠️ Non sono state trovate SM profilate all'utente indicato")
 
-        # Gruppi O365
         lines.append(f"{step}. Rimozione in AD del gruppo")
         lines.append("   - O365 Copilot Plus")
         lines.append("   - O365 Teams Premium")
@@ -433,7 +423,6 @@ elif funzionalita == "Deprovisioning":
             warnings.append("⚠️ Non è stato trovato nessun gruppo O365 Utenti per l'utente")
         step += 1
 
-        # Passaggi finali
         lines.append(f"{step}. Disabilitazione utenza di dominio")
         step += 1
         lines.append(f"{step}. Spostamento in dismessi/utenti")
@@ -442,13 +431,14 @@ elif funzionalita == "Deprovisioning":
         step += 1
         lines.append(f"{step}. Rimozione Wi-Fi")
 
-        # Append warning alla fine
+        # Aggiunta dei warning alla fine, se presenti
         if warnings:
-            lines.append("")  # Riga vuota per separazione
+            lines.append("")  # Riga vuota
+            lines.append("⚠️ Avvisi:")
             lines.extend(warnings)
 
-        # Anteprima testo finale
         st.text("\n".join(lines))
+
 
 
 
