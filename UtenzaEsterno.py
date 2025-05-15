@@ -364,10 +364,11 @@ elif funzionalita == "Deprovisioning":
             dl_list = dl_df.loc[mask, dl_df.columns[5]].dropna().tolist()
 
         sm_list = []
-        if not sm_df.empty and sm_df.shape[1] > 1:
+        if not sm_df.empty and sm_df.shape[1] > 2:  # Controllo che ci siano almeno 3 colonne
             target = f"{sam}@consip.it"
-            mask = sm_df.iloc[:, 1].astype(str).str.lower() == target
-            sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()
+            mask = sm_df.iloc[:, 2].astype(str).str.lower() == target  # filtro sulla terza colonna
+            sm_list = sm_df.loc[mask, sm_df.columns[0]].dropna().tolist()  # estrazione dalla prima colonna
+
 
         grp = []
         if not mg_df.empty and mg_df.shape[1] > 3:
