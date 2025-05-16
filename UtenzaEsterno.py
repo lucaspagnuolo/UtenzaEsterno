@@ -132,7 +132,7 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
                 ["Cell", telefono_fmt],
-                ["Data Fine (gg/mm/aaaa)",data_fine]
+                ["Data Fine (mm/gg/aaaa)",formatta_data(data_fine)]
             ]
             # Campo extra se Casella Personale
             if casella_personale:
