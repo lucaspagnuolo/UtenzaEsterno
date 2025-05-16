@@ -167,9 +167,8 @@ Gli utenti verranno contattati e supportati per accesso e configurazione MFA da 
 - psw via SMS a {telefono_fmt}
 
 Si richiede cortesemente contatto utenti per MFA/accesso utente/webmail:
-{display_name_str}-   {telefono_fmt} -  {email_aziendale}
-. Nota attenzione alla PSW. Grazie ciao
-""".format(email_aziendale=email_aziendale, telefono_fmt=telefono_fmt))
+{display_name_str}-   {telefono_fmt} -  {email_aziendale}. Nota attenzione alla PSW. Grazie ciao
+""".format(email_aziendale=email_aziendale, telefono_fmt=telefono_fmt,display_name_str))
             if casella_personale and sm_list:
                 for sm in sm_list:
                     st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
