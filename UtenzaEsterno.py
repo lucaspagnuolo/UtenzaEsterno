@@ -10,7 +10,7 @@ reset_keys = [
     "Data di Fine", "Employee ID", "Dipartimento", "Email", "flag_email",
     # chiavi Azure
     "Nome_Azure", "SecondoNome_Azure", "Cognome_Azure", "SecondoCognome_Azure",
-    "TelAziendale", "EmailAziendale", "Manager_Azure", "SM_Azure"
+    "TelAziendale", "EmailAziendale", "Manager_Azure", "SM_Azure", "Data_fine_Azure"
 ]
 
 if "reset_fields" not in st.session_state:
@@ -105,6 +105,7 @@ if funzionalita == "Gestione Creazione Utenze":
         telefono_aziendale = st.text_input("Telefono Aziendale (senza prefisso)", key="TelAziendale").strip()
         email_aziendale = st.text_input("Email Aziendale", key="EmailAziendale").strip()
         manager = st.text_input("Manager", key="Manager_Azure").strip()
+        data_fine = st.text_input("Data Fine (gg/mm/aaaa)", key="Data_fine_Azure").strip()        
 
         casella_personale = st.checkbox("Casella Personale Consip", key="Casella_Personale_Azure")
         sm_list = []
@@ -131,6 +132,7 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
                 ["Cell", telefono_fmt]
+                ["Data Fine (gg/mm/aaaa)",data_fine]
             ]
             # Campo extra se Casella Personale
             if casella_personale:
