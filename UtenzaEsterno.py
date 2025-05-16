@@ -162,9 +162,13 @@ Aggiungere all’utenza le licenze:
             st.markdown("""
 Aggiungere all’utenza la MFA
 
-La comunicazione delle credenziali dovranno essere inviate ad imac@consip.it:
+Gli utenti verranno contattati e supportati per accesso e configurazione MFA da imac@consip.it:
 - utenza via email a {email_aziendale}
 - psw via SMS a {telefono_fmt}
+
+Si richiede cortesemente contatto utenti per MFA/accesso utente/webmail:
+{display_name_str}-   {telefono_fmt} -  {email_aziendale}
+. Nota attenzione alla PSW. Grazie ciao
 """.format(email_aziendale=email_aziendale, telefono_fmt=telefono_fmt))
             if casella_personale and sm_list:
                 for sm in sm_list:
