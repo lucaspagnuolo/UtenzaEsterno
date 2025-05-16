@@ -117,6 +117,7 @@ if funzionalita == "Gestione Creazione Utenze":
             sAMAccountName = genera_samaccountname(nome, cognome, secondo_nome, secondo_cognome, esterno=True)
             telefono_fmt = f"+39 {telefono_aziendale}" if telefono_aziendale else ""
             display_name_str = build_full_name(cognome, secondo_cognome, nome, secondo_nome, esterno=True)
+            name_fmt= build_full_name(cognome, secondo_cognome, nome, secondo_nome, esterno=False)
 
             # Costruzione tabella base
             table = [
@@ -124,7 +125,7 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Tipo Utenza", "Azure"],
                 ["Utenza", sAMAccountName],
                 ["Alias", sAMAccountName],
-                ["Name", build_full_name(cognome, secondo_cognome, nome, secondo_nome, esterno=False)],
+                ["Name", name_fmt],
                 ["DisplayName", display_name_str],
                 ["cn", display_name_str],
                 ["GivenName", ' '.join([nome, secondo_nome]).strip()],
@@ -162,13 +163,11 @@ Aggiungere all’utenza le licenze:
             st.markdown("""
 Aggiungere all’utenza la MFA
 
-Gli utenti verranno contattati e supportati per accesso e configurazione MFA da imac@consip.it:
-- utenza via email a {email_aziendale}
-- psw via SMS a {telefono_fmt}
+Gli utenti verranno contattati e supportati per accesso e configurazione MFA da imac@consip.it.
 
 Si richiede cortesemente contatto utenti per MFA/accesso utente/webmail:
-{display_name_str}-   {telefono_fmt} -  {email_aziendale}. Nota attenzione alla PSW. Grazie ciao
-""".format(email_aziendale=email_aziendale, telefono_fmt=telefono_fmt,display_name_str=display_name_str))
+{name_fmt} -   {telefono_fmt} -  {email_aziendale}. Nota attenzione alla PSW. Grazie ciao
+""".format(email_aziendale=email_aziendale, telefono_fmt=telefono_fmt,name_fmt=name_fmt))
             if casella_personale and sm_list:
                 for sm in sm_list:
                     st.markdown(f"La url per la web mail è https://outlook.office.com/mail/{sm}@consip.it")
