@@ -143,6 +143,7 @@ if funzionalita == "Gestione Creazione Utenze":
             table_md += "| " + " | ".join(["---"]*len(table[0])) + " |\n"
             for row in table[1:]:
                 table_md += "| " + " | ".join(row) + " |\n"
+            st.markdown("""Ciao, Si richiede la definizione di un utenza Azure come sotto indicato.""")
             st.markdown(table_md)
 
             # Licenze e SM se Casella Personale
@@ -161,7 +162,7 @@ Aggiungere all’utenza le licenze:
             st.markdown("""
 Aggiungere all’utenza la MFA
 
-La comunicazione delle credenziali dovranno essere inviate:
+La comunicazione delle credenziali dovranno essere inviate ad imac@consip.it:
 - utenza via email a {email_aziendale}
 - psw via SMS a {telefono_fmt}
 """.format(email_aziendale=email_aziendale, telefono_fmt=telefono_fmt))
