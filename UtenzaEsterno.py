@@ -131,7 +131,7 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Surname", ' '.join([cognome, secondo_cognome]).strip()],
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
-                ["Cell", telefono_fmt]
+                ["Cell", telefono_fmt],
                 ["Data Fine (gg/mm/aaaa)",data_fine]
             ]
             # Campo extra se Casella Personale
