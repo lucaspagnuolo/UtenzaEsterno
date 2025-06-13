@@ -105,7 +105,8 @@ if funzionalita == "Gestione Creazione Utenze":
         telefono_aziendale = st.text_input("Telefono Aziendale (senza prefisso)", key="TelAziendale").strip()
         email_aziendale = st.text_input("Email Aziendale", key="EmailAziendale").strip()
         manager = st.text_input("Manager", key="Manager_Azure").strip()
-        data_fine = st.text_input("Data Fine (gg/mm/aaaa)", key="Data_fine_Azure").strip()        
+        data_fine = st.text_input("Data Fine (gg/mm/aaaa)", key="Data_fine_Azure").strip()   
+        CF = st.text_input("Codice Fiscale", key="Codice_fiscale").strip()
 
         casella_personale = st.checkbox("Casella Personale Consip", key="Casella_Personale_Azure")
         sm_list = []
@@ -133,7 +134,8 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
                 ["Cell", telefono_fmt],
-                ["Data Fine (mm/gg/aaaa)",formatta_data(data_fine)]
+                ["Data Fine (mm/gg/aaaa)*",formatta_data(data_fine)],
+                ["Codice Fiscale", CF]
             ]
             # Campo extra se Casella Personale
             if casella_personale:
@@ -150,6 +152,8 @@ if funzionalita == "Gestione Creazione Utenze":
             # Licenze e SM se Casella Personale
             if casella_personale:
                 st.markdown("""
+* il campo "Data fine" deve essere inserito in "Data Assunzione" in Azure
+
 Aggiungere all’utenza le licenze:
 - Microsoft Defender per Office 365 (piano 2)
 - Office 365 E3
