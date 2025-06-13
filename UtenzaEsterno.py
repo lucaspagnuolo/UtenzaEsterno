@@ -134,7 +134,7 @@ if funzionalita == "Gestione Creazione Utenze":
                 ["Email aziendale", email_aziendale],
                 ["Manager", manager],
                 ["Cell", telefono_fmt],
-                ["Data Fine (mm/gg/aaaa)*",formatta_data(data_fine)],
+                ["Data Fine (mm/gg/aaaa)**",formatta_data(data_fine)],
                 ["Codice Fiscale", CF]
             ]
             # Campo extra se Casella Personale
