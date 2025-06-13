@@ -152,7 +152,7 @@ if funzionalita == "Gestione Creazione Utenze":
             # Licenze e SM se Casella Personale
             if casella_personale:
                 st.markdown("""
-* il campo "Data fine" deve essere inserito in "Data Assunzione" in Azure
+** il campo "Data fine" deve essere inserito in "Data Assunzione" in Azure
 
 Aggiungere all’utenza le licenze:
 - Microsoft Defender per Office 365 (piano 2)
