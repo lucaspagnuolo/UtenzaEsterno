@@ -148,12 +148,12 @@ if funzionalita == "Gestione Creazione Utenze":
                 table_md += "| " + " | ".join(row) + " |\n"
             st.markdown("""Ciao, Si richiede la definizione di un utenza Azure come sotto indicato.""")
             st.markdown(table_md)
+            st.markdown("""** il campo "Data fine" deve essere inserito in "Data Assunzione" in Azure""")
 
             # Licenze e SM se Casella Personale
             if casella_personale:
                 st.markdown("""
-** il campo "Data fine" deve essere inserito in "Data Assunzione" in Azure
-
+                
 Aggiungere all’utenza le licenze:
 - Microsoft Defender per Office 365 (piano 2)
 - Office 365 E3
